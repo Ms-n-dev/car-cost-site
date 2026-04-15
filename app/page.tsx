@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
-
+import Navbar from "@/components/Navbar";
 function currency(value: number) {
   return new Intl.NumberFormat("en-GB", {
     style: "currency",
@@ -223,6 +223,7 @@ export default function Page() {
   return (
     <main className="min-h-screen bg-slate-100 text-slate-900">
       <div className="mx-auto max-w-7xl px-6 py-8 md:px-10 md:py-10">
+        <Navbar />
 
         <div className="mb-8">
           <div className="mb-4 inline-flex rounded-full border border-slate-300 bg-white px-4 py-1.5 text-sm font-semibold text-slate-700 shadow-sm">
