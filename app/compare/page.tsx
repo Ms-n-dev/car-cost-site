@@ -122,9 +122,7 @@ carYearOpen: false,
               handleFuelTypeChange={handleFuelTypeChange(setCar1)}
             />
 
-            <div className="mt-4 text-sm text-slate-600">
-              Age: {car1Age} {car1Age === 1 ? "year" : "years"}
-            </div>
+
           </section>
 
           {/* Car 2 */}
@@ -141,9 +139,6 @@ carYearOpen: false,
               handleFuelTypeChange={handleFuelTypeChange(setCar2)}
             />
 
-            <div className="mt-4 text-sm text-slate-600">
-              Age: {car2Age} {car2Age === 1 ? "year" : "years"}
-            </div>
           </section>
 
         </div>
