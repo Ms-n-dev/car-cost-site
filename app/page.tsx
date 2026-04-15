@@ -1,203 +1,236 @@
 "use client";
 
-import { useState } from "react";
+import React, { useMemo, useState } from "react";
 
-export default function Home() {
-  const [carValue, setCarValue] = useState(20000);
-  const [age, setAge] = useState(3);
-  const [mileage, setMileage] = useState(30000);
-  const [annualMileage, setAnnualMileage] = useState(10000);
+function currency(value: number) {
+  return new Intl.NumberFormat("en-GB", {
+    style: "currency",
+    currency: "GBP",
+    maximumFractionDigits: 0,
+  }).format(Number.isFinite(value) ? value : 0);
+}
+
+function currency2(value: number) {
+  return new Intl.NumberFormat("en-GB", {
+    style: "currency",
+    currency: "GBP",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(Number.isFinite(value) ? value : 0);
+}
+
+function numberOrZero(value: number) {
+  return Number.isFinite(value) ? value : 0;
+}
+
+export default function Page() {
+  const [carValue, setCarValue] = useState(18000);
+  const [carAge, setCarAge] = useState(5);
+  const [currentMileage, setCurrentMileage] = useState(50000);
+  const [annualMiles, setAnnualMiles] = useState(10000);
   const [carType, setCarType] = useState("saloon");
 
+  const [fuelType, setFuelType] = useState("petrol");
+  const [efficiency, setEfficiency] = useState(38);
+  const [fuelPrice, setFuelPrice] = useState(158.5);
+  const [insurance, setInsurance] = useState(900);
+  const [tax, setTax] = useState(190);
+  const [servicing, setServicing] = useState(350);
+  const [tyres, setTyres] = useState(300);
+  const [repairsBuffer, setRepairsBuffer] = useState(400);
+
+  const fuelDefaults = {
+    petrol: 158.5,
+    diesel: 191.5,
+    premium_petrol: 171.0,
+    electric: 7.5,
+  } as const;
+
+  const fuelTypeLabel =
+    fuelType === "electric" ? "Electricity price (p/kWh)" : "Fuel price (p/litre)";
+  const efficiencyLabel = fuelType === "electric" ? "Efficiency (mi/kWh)" : "MPG";
+
   // ===============================
-  // 1. AGE CURVE (WITH CAR TYPE)
+  // NEW DEPRECIATION MODEL
   // ===============================
-  function getBaseDepreciationRate(age: number, carType: string): number {
+  const depreciationRate = useMemo(() => {
     let maxDep = 0.28;
     let minDep = 0.04;
     let decay = 0.25;
 
-    // Adjust by car type
-    if (carType === "suv") decay = 0.2;        // holds value better
-    if (carType === "luxury") decay = 0.3;     // drops faster
-    if (carType === "ev") decay = 0.35;        // fastest depreciation
+    if (carType === "suv") decay = 0.2;
+    if (carType === "luxury") decay = 0.3;
+    if (carType === "ev") decay = 0.35;
 
-    return minDep + (maxDep - minDep) * Math.exp(-decay * age);
-  }
+    const baseRate = minDep + (maxDep - minDep) * Math.exp(-decay * carAge);
 
-  // ===============================
-  // 2. MILEAGE MULTIPLIER
-  // ===============================
-  function getMileageMultiplier(age: number, mileage: number): number {
-    const expectedMileage = Math.max(age * 10000, 5000);
-    const ratio = mileage / expectedMileage;
+    const expectedMileage = Math.max(carAge * 10000, 5000);
+    const mileageRatio = currentMileage / expectedMileage;
 
-    if (ratio <= 0.7) return 0.9;
-    if (ratio <= 1.0) return 0.95;
-    if (ratio <= 1.3) return 1.05;
-    if (ratio <= 1.6) return 1.15;
-    return 1.25;
-  }
+    let mileageMultiplier = 1;
 
-  // ===============================
-  // 3. FUTURE IMPACT
-  // ===============================
-  function getFutureImpact(
-    age: number,
-    mileage: number,
-    annualMileage: number
-  ): number {
-    const currentExpected = Math.max(age * 10000, 5000);
-    const futureExpected = (age + 1) * 10000;
+    if (mileageRatio <= 0.7) mileageMultiplier = 0.9;
+    else if (mileageRatio <= 1.0) mileageMultiplier = 0.95;
+    else if (mileageRatio <= 1.3) mileageMultiplier = 1.05;
+    else if (mileageRatio <= 1.6) mileageMultiplier = 1.15;
+    else mileageMultiplier = 1.25;
 
-    const currentRatio = mileage / currentExpected;
-    const futureRatio = (mileage + annualMileage) / futureExpected;
+    const futureMileage = currentMileage + annualMiles;
+    const futureExpected = (carAge + 1) * 10000;
+    const futureRatio = futureMileage / futureExpected;
 
-    if (futureRatio > currentRatio) return 1.1;
-    if (futureRatio < currentRatio) return 0.95;
-    return 1.0;
-  }
+    let futureImpact = 1;
+    if (futureRatio > mileageRatio) futureImpact = 1.1;
+    else if (futureRatio < mileageRatio) futureImpact = 0.95;
 
-  // ===============================
-  // 4. MILEAGE WARNING SYSTEM
-  // ===============================
-  function getMileageStatus(age: number, mileage: number) {
-    const expected = Math.max(age * 10000, 5000);
-    const diff = mileage - expected;
-    const percent = (diff / expected) * 100;
+    return baseRate * mileageMultiplier * futureImpact;
+  }, [carAge, currentMileage, annualMiles, carType]);
 
-    if (percent > 30)
-      return {
-        label: `+${percent.toFixed(0)}% above expected`,
-        color: "text-red-400",
-        message: "High mileage - will hurt resale value",
-      };
+  const annualMaintenance = useMemo(() => {
+    return numberOrZero(servicing) + numberOrZero(tyres) + numberOrZero(repairsBuffer);
+  }, [servicing, tyres, repairsBuffer]);
 
-    if (percent > 10)
-      return {
-        label: `+${percent.toFixed(0)}% above expected`,
-        color: "text-yellow-400",
-        message: "Slightly above average mileage",
-      };
+  const results = useMemo(() => {
+    const litresPerGallon = 4.54609;
+    let annualFuelCost = 0;
 
-    if (percent < -20)
-      return {
-        label: `${percent.toFixed(0)}% below expected`,
-        color: "text-green-400",
-        message: "Low mileage - strong resale potential",
-      };
+    if (fuelType === "electric") {
+      const milesPerKwh = Math.max(numberOrZero(efficiency), 0.1);
+      const annualKwhUsed = numberOrZero(annualMiles) / milesPerKwh;
+      annualFuelCost = annualKwhUsed * (numberOrZero(fuelPrice) / 100);
+    } else {
+      const mpg = Math.max(numberOrZero(efficiency), 1);
+      const gallonsUsed = numberOrZero(annualMiles) / mpg;
+      const litresUsed = gallonsUsed * litresPerGallon;
+      annualFuelCost = litresUsed * (numberOrZero(fuelPrice) / 100);
+    }
+
+    const annualDepreciation = numberOrZero(carValue) * depreciationRate;
+
+    const annualTotal =
+      annualFuelCost +
+      numberOrZero(insurance) +
+      numberOrZero(tax) +
+      annualMaintenance +
+      annualDepreciation;
 
     return {
-      label: "Normal mileage",
-      color: "text-gray-400",
-      message: "Within expected range",
+      annualFuelCost,
+      annualDepreciation,
+      annualTotal,
+      monthlyTotal: annualTotal / 12,
+      costPerMile: annualTotal / Math.max(numberOrZero(annualMiles), 1),
     };
+  }, [
+    annualMiles,
+    efficiency,
+    fuelPrice,
+    fuelType,
+    insurance,
+    tax,
+    annualMaintenance,
+    carValue,
+    depreciationRate,
+  ]);
+
+  const interpretation = useMemo(() => {
+    if (results.annualTotal < 3500) {
+      return `Low ownership cost at ${currency(results.monthlyTotal)} per month.`;
+    }
+    if (results.annualTotal > 7000) {
+      return `High ownership cost at ${currency(results.monthlyTotal)} per month.`;
+    }
+    return `Moderate ownership cost at ${currency(results.monthlyTotal)} per month.`;
+  }, [results]);
+
+  const mileageInsight = useMemo(() => {
+    const expected = Math.max(carAge * 10000, 5000);
+    const percent = ((currentMileage - expected) / expected) * 100;
+
+    if (percent > 30)
+      return `High mileage: ${percent.toFixed(0)}% above expected.`;
+
+    if (percent > 10)
+      return `Above average mileage: ${percent.toFixed(0)}%.`;
+
+    if (percent < -20)
+      return `Low mileage: ${Math.abs(percent).toFixed(0)}% below expected.`;
+
+    return `Mileage is normal for its age.`;
+  }, [carAge, currentMileage]);
+
+  function handleFuelTypeChange(value: string) {
+    setFuelType(value);
+
+    if (value === "electric") {
+      setFuelPrice(fuelDefaults.electric);
+      setEfficiency(3.5);
+      return;
+    }
+
+    setFuelPrice(fuelDefaults[value as keyof typeof fuelDefaults]);
+
+    if (efficiency < 8) {
+      setEfficiency(38);
+    }
   }
 
-  // ===============================
-  // FINAL CALC
-  // ===============================
-  const baseRate = getBaseDepreciationRate(age, carType);
-  const mileageMultiplier = getMileageMultiplier(age, mileage);
-  const futureImpact = getFutureImpact(age, mileage, annualMileage);
+  const cardClass =
+    "rounded-3xl border border-slate-300 bg-white p-6 shadow-md shadow-slate-200/70";
+  const inputClass =
+    "w-full rounded-2xl border border-slate-400 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-200";
+  const labelClass = "mb-2 block text-sm font-medium text-slate-700";
+  const metricCardClass = "rounded-2xl bg-slate-200 p-4";
+  const sectionTitleClass = "text-2xl font-bold text-slate-900";
+  const mutedTextClass = "text-slate-600";
 
-  const finalRate = baseRate * mileageMultiplier * futureImpact;
-  const depreciationAmount = carValue * finalRate;
-
-  const mileageStatus = getMileageStatus(age, mileage);
-
-  // ===============================
-  // UI
-  // ===============================
   return (
-    <main className="min-h-screen bg-black text-white p-6 flex items-center justify-center">
-      <div className="bg-zinc-900 p-8 rounded-2xl shadow-xl w-full max-w-xl space-y-6">
+    <main className="min-h-screen bg-slate-100 text-slate-900">
+      <div className="mx-auto max-w-7xl px-6 py-8">
+        <h1 className="mb-6 text-4xl font-bold">Total Cost of Ownership</h1>
 
-        <h1 className="text-2xl font-bold">Car Depreciation Calculator</h1>
+        <div className="grid gap-6 lg:grid-cols-[1.1fr_1fr]">
+          <section className={cardClass}>
+            <h2 className={sectionTitleClass}>Inputs</h2>
 
-        {/* Inputs */}
-        <div className="space-y-4">
+            <div className="grid gap-5 md:grid-cols-2 mt-4">
 
-          <div>
-            <label className="text-sm text-gray-400">Car Value (£)</label>
-            <input
-              type="number"
-              value={carValue}
-              onChange={(e) => setCarValue(Number(e.target.value))}
-              className="w-full p-2 rounded bg-zinc-800 mt-1"
-            />
-          </div>
+              <input className={inputClass} type="number" value={carValue} onChange={(e)=>setCarValue(Number(e.target.value))}/>
+              <input className={inputClass} type="number" value={carAge} onChange={(e)=>setCarAge(Number(e.target.value))}/>
+              <input className={inputClass} type="number" value={currentMileage} onChange={(e)=>setCurrentMileage(Number(e.target.value))}/>
+              <input className={inputClass} type="number" value={annualMiles} onChange={(e)=>setAnnualMiles(Number(e.target.value))}/>
 
-          <div>
-            <label className="text-sm text-gray-400">Car Age (years)</label>
-            <input
-              type="number"
-              value={age}
-              onChange={(e) => setAge(Number(e.target.value))}
-              className="w-full p-2 rounded bg-zinc-800 mt-1"
-            />
-          </div>
+              <select className={inputClass} value={carType} onChange={(e)=>setCarType(e.target.value)}>
+                <option value="saloon">Saloon</option>
+                <option value="suv">SUV</option>
+                <option value="luxury">Luxury</option>
+                <option value="ev">EV</option>
+              </select>
 
-          <div>
-            <label className="text-sm text-gray-400">Car Type</label>
-            <select
-              value={carType}
-              onChange={(e) => setCarType(e.target.value)}
-              className="w-full p-2 rounded bg-zinc-800 mt-1"
-            >
-              <option value="saloon">Saloon</option>
-              <option value="suv">SUV</option>
-              <option value="luxury">Luxury</option>
-              <option value="ev">EV</option>
-            </select>
-          </div>
+            </div>
+          </section>
 
-          <div>
-            <label className="text-sm text-gray-400">Current Mileage</label>
-            <input
-              type="number"
-              value={mileage}
-              onChange={(e) => setMileage(Number(e.target.value))}
-              className="w-full p-2 rounded bg-zinc-800 mt-1"
-            />
-          </div>
+          <div className="space-y-6">
 
-          <div>
-            <label className="text-sm text-gray-400">Annual Mileage</label>
-            <input
-              type="number"
-              value={annualMileage}
-              onChange={(e) => setAnnualMileage(Number(e.target.value))}
-              className="w-full p-2 rounded bg-zinc-800 mt-1"
-            />
+            <section className={cardClass}>
+              <h2 className={sectionTitleClass}>Results</h2>
+
+              <div className="grid gap-4 md:grid-cols-3 mt-4">
+                <div className={metricCardClass}>{currency(results.annualTotal)}</div>
+                <div className={metricCardClass}>{currency(results.monthlyTotal)}</div>
+                <div className={metricCardClass}>{currency2(results.costPerMile)}</div>
+              </div>
+
+              <div className="mt-4">{interpretation}</div>
+
+              <div className="mt-4 text-sm text-slate-700">
+                <strong>Mileage insight:</strong> {mileageInsight}
+              </div>
+
+            </section>
+
           </div>
         </div>
-
-        {/* Mileage Warning */}
-        <div className={`text-sm ${mileageStatus.color}`}>
-          {mileageStatus.label} — {mileageStatus.message}
-        </div>
-
-        {/* Results */}
-        <div className="bg-zinc-800 p-4 rounded-xl space-y-2">
-          <p className="text-sm text-gray-400">Next Year Depreciation</p>
-
-          <p className="text-3xl font-bold text-green-400">
-            £{depreciationAmount.toFixed(0)}
-          </p>
-
-          <p className="text-sm text-gray-400">
-            {(finalRate * 100).toFixed(1)}%
-          </p>
-        </div>
-
-        {/* Breakdown */}
-        <div className="text-sm text-gray-400 space-y-1">
-          <p>Base (age + type): {(baseRate * 100).toFixed(1)}%</p>
-          <p>Mileage impact: × {mileageMultiplier.toFixed(2)}</p>
-          <p>Usage impact: × {futureImpact.toFixed(2)}</p>
-        </div>
-
       </div>
     </main>
   );
