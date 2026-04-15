@@ -40,7 +40,7 @@ export default function Page() {
   const [tyres, setTyres] = useState(300);
   const [repairsBuffer, setRepairsBuffer] = useState(400);
 
-  // DERIVED AGE (replaces state)
+  // DERIVED AGE
   const carAge = useMemo(() => {
     return Math.max(currentYear - carYear, 0);
   }, [carYear, currentYear]);
@@ -254,7 +254,7 @@ export default function Page() {
                 <input className={inputClass} type="number" value={carValue} onChange={(e) => setCarValue(Number(e.target.value))} />
               </div>
 
-              {/* UPDATED INPUT */}
+              {/* UPDATED FIELD */}
               <div>
                 <label className={labelClass}>Car year</label>
                 <select
@@ -274,7 +274,10 @@ export default function Page() {
                 </div>
               </div>
 
-              {/* everything else unchanged */}
+              <div>
+                <label className={labelClass}>Current mileage</label>
+                <input className={inputClass} type="number" value={currentMileage} onChange={(e) => setCurrentMileage(Number(e.target.value))} />
+              </div>
 
               <div>
                 <label className={labelClass}>Car type</label>
