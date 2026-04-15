@@ -2,6 +2,8 @@
 
 import React, { useMemo, useState } from "react";
 import Navbar from "@/components/Navbar";
+import CarInputs from "@/components/CarInputs";
+
 function currency(value: number) {
   return new Intl.NumberFormat("en-GB", {
     style: "currency",
@@ -26,24 +28,25 @@ function numberOrZero(value: number) {
 export default function Page() {
   const currentYear = new Date().getFullYear();
 
-  const [carValue, setCarValue] = useState(18000);
-  const [carYear, setCarYear] = useState(currentYear - 5);
-  const [annualMiles, setAnnualMiles] = useState(10000);
-  const [currentMileage, setCurrentMileage] = useState(50000);
-  const [carType, setCarType] = useState("standard");
-  const [fuelType, setFuelType] = useState("petrol");
-  const [efficiency, setEfficiency] = useState(38);
-  const [fuelPrice, setFuelPrice] = useState(158.5);
-  const [insurance, setInsurance] = useState(900);
-  const [tax, setTax] = useState(190);
-  const [servicing, setServicing] = useState(350);
-  const [tyres, setTyres] = useState(300);
-  const [repairsBuffer, setRepairsBuffer] = useState(400);
+  const [car, setCar] = useState({
+    carValue: 18000,
+    carYear: currentYear - 5,
+    annualMiles: 10000,
+    currentMileage: 50000,
+    carType: "standard",
+    fuelType: "petrol",
+    efficiency: 38,
+    fuelPrice: 158.5,
+    insurance: 900,
+    tax: 190,
+    servicing: 350,
+    tyres: 300,
+    repairsBuffer: 400,
+  });
 
-  // DERIVED AGE
   const carAge = useMemo(() => {
-    return Math.max(currentYear - carYear, 0);
-  }, [carYear, currentYear]);
+    return Math.max(currentYear - car.carYear, 0);
+  }, [car.carYear, currentYear]);
 
   const fuelDefaults = {
     petrol: 158.5,
@@ -52,12 +55,18 @@ export default function Page() {
     electric: 7.5,
   } as const;
 
-  const fuelTypeLabel =
-    fuelType === "electric" ? "Electricity price (p/kWh)" : "Fuel price (p/litre)";
+  function handleFuelTypeChange(value: string) {
+    setCar((prev) => ({
+      ...prev,
+      fuelType: value,
+      fuelPrice:
+        value === "electric"
+          ? fuelDefaults.electric
+          : fuelDefaults[value as keyof typeof fuelDefaults],
+      efficiency: value === "electric" ? 3.5 : prev.efficiency < 8 ? 38 : prev.efficiency,
+    }));
+  }
 
-  const efficiencyLabel = fuelType === "electric" ? "Efficiency (mi/kWh)" : "MPG";
-
-  // AGE depreciation
   const depreciationRate = useMemo(() => {
     if (carAge <= 2) return 0.18;
     if (carAge <= 5) return 0.12;
@@ -65,52 +74,49 @@ export default function Page() {
     return 0.05;
   }, [carAge]);
 
-  // CURRENT mileage factor
   const mileageFactor = useMemo(() => {
-    if (currentMileage <= 30000) return 1.25;
-    if (currentMileage <= 80000) return 1.0;
-    if (currentMileage <= 120000) return 0.75;
+    if (car.currentMileage <= 30000) return 1.25;
+    if (car.currentMileage <= 80000) return 1.0;
+    if (car.currentMileage <= 120000) return 0.75;
     return 0.6;
-  }, [currentMileage]);
+  }, [car.currentMileage]);
 
-  // Car type factor
   const carTypeFactor = useMemo(() => {
-    if (carType === "luxury") return 1.15;
-    if (carType === "performance") return 1.2;
+    if (car.carType === "luxury") return 1.15;
+    if (car.carType === "performance") return 1.2;
     return 1.0;
-  }, [carType]);
+  }, [car.carType]);
 
-  // FUTURE usage factor
   const usageFactor = useMemo(() => {
-    if (annualMiles <= 6000) return 0.9;
-    if (annualMiles <= 12000) return 1.0;
-    if (annualMiles <= 20000) return 1.15;
-    if (annualMiles <= 30000) return 1.3;
+    if (car.annualMiles <= 6000) return 0.9;
+    if (car.annualMiles <= 12000) return 1.0;
+    if (car.annualMiles <= 20000) return 1.15;
+    if (car.annualMiles <= 30000) return 1.3;
     return 1.5;
-  }, [annualMiles]);
+  }, [car.annualMiles]);
 
   const annualMaintenance = useMemo(() => {
-    return numberOrZero(servicing) + numberOrZero(tyres) + numberOrZero(repairsBuffer);
-  }, [servicing, tyres, repairsBuffer]);
+    return numberOrZero(car.servicing) + numberOrZero(car.tyres) + numberOrZero(car.repairsBuffer);
+  }, [car.servicing, car.tyres, car.repairsBuffer]);
 
   const results = useMemo(() => {
     const litresPerGallon = 4.54609;
 
     let annualFuelCost = 0;
 
-    if (fuelType === "electric") {
-      const milesPerKwh = Math.max(numberOrZero(efficiency), 0.1);
-      const annualKwhUsed = numberOrZero(annualMiles) / milesPerKwh;
-      annualFuelCost = annualKwhUsed * (numberOrZero(fuelPrice) / 100);
+    if (car.fuelType === "electric") {
+      const milesPerKwh = Math.max(numberOrZero(car.efficiency), 0.1);
+      const annualKwhUsed = numberOrZero(car.annualMiles) / milesPerKwh;
+      annualFuelCost = annualKwhUsed * (numberOrZero(car.fuelPrice) / 100);
     } else {
-      const mpg = Math.max(numberOrZero(efficiency), 1);
-      const gallonsUsed = numberOrZero(annualMiles) / mpg;
+      const mpg = Math.max(numberOrZero(car.efficiency), 1);
+      const gallonsUsed = numberOrZero(car.annualMiles) / mpg;
       const litresUsed = gallonsUsed * litresPerGallon;
-      annualFuelCost = litresUsed * (numberOrZero(fuelPrice) / 100);
+      annualFuelCost = litresUsed * (numberOrZero(car.fuelPrice) / 100);
     }
 
     const annualDepreciation =
-      numberOrZero(carValue) *
+      numberOrZero(car.carValue) *
       depreciationRate *
       mileageFactor *
       carTypeFactor *
@@ -118,74 +124,40 @@ export default function Page() {
 
     const annualTotal =
       annualFuelCost +
-      numberOrZero(insurance) +
-      numberOrZero(tax) +
+      numberOrZero(car.insurance) +
+      numberOrZero(car.tax) +
       annualMaintenance +
       annualDepreciation;
-
-    const monthlyTotal = annualTotal / 12;
-    const costPerMile = annualTotal / Math.max(numberOrZero(annualMiles), 1);
 
     return {
       annualFuelCost,
       annualDepreciation,
       annualTotal,
-      monthlyTotal,
-      costPerMile,
+      monthlyTotal: annualTotal / 12,
+      costPerMile: annualTotal / Math.max(numberOrZero(car.annualMiles), 1),
     };
-  }, [
-    annualMiles,
-    efficiency,
-    fuelPrice,
-    fuelType,
-    insurance,
-    tax,
-    annualMaintenance,
-    carValue,
-    depreciationRate,
-    mileageFactor,
-    carTypeFactor,
-    usageFactor,
-  ]);
-
-  const interpretation = useMemo(() => {
-    if (results.annualTotal < 3500) {
-      return `This is a relatively low ownership cost. You are at about ${currency(
-        results.monthlyTotal
-      )} per month and ${currency2(results.costPerMile)} per mile.`;
-    }
-
-    if (results.annualTotal > 7000) {
-      return `This is on the expensive side. The car is costing about ${currency(
-        results.monthlyTotal
-      )} per month and ${currency2(results.costPerMile)} per mile.`;
-    }
-
-    return `This sits in the middle. The car is costing about ${currency(
-      results.monthlyTotal
-    )} per month and ${currency2(results.costPerMile)} per mile.`;
-  }, [results]);
+  }, [car, depreciationRate, mileageFactor, carTypeFactor, usageFactor, annualMaintenance]);
 
   const mileageWarning = useMemo(() => {
     const lowerNow = carAge * 6000;
     const upperNow = carAge * 14000;
 
-    const projectedMileage = currentMileage + annualMiles;
+    const projectedMileage = car.currentMileage + car.annualMiles;
     const nextYearAge = carAge + 1;
 
     const lowerNext = nextYearAge * 6000;
     const upperNext = nextYearAge * 14000;
 
-    if (currentMileage > 120000) {
+    if (car.currentMileage > 120000) {
       return "High mileage car — depreciation slows, but repair risk increases.";
     }
 
-    if (currentMileage > upperNow || projectedMileage > upperNext) {
+    if (car.currentMileage > upperNow || projectedMileage > upperNext) {
       return "High mileage for its age — your driving may accelerate depreciation.";
     }
 
     if (
-      currentMileage < lowerNow &&
+      car.currentMileage < lowerNow &&
       projectedMileage < lowerNext &&
       carAge > 2
     ) {
@@ -193,23 +165,7 @@ export default function Page() {
     }
 
     return null;
-  }, [currentMileage, carAge, annualMiles]);
-
-  function handleFuelTypeChange(value: string) {
-    setFuelType(value);
-
-    if (value === "electric") {
-      setFuelPrice(fuelDefaults.electric);
-      setEfficiency(3.5);
-      return;
-    }
-
-    setFuelPrice(fuelDefaults[value as keyof typeof fuelDefaults]);
-
-    if (efficiency < 8) {
-      setEfficiency(38);
-    }
-  }
+  }, [car, carAge]);
 
   const cardClass =
     "rounded-3xl border border-slate-300 bg-white p-6 shadow-md shadow-slate-200/70";
@@ -220,245 +176,146 @@ export default function Page() {
   const sectionTitleClass = "text-2xl font-bold text-slate-900";
   const mutedTextClass = "text-slate-600";
 
-return (
-  <main className="min-h-screen bg-slate-100 text-slate-900">
-    <div className="mx-auto max-w-7xl px-6 py-8 md:px-10 md:py-10">
+  return (
+    <main className="min-h-screen bg-slate-100 text-slate-900">
+      <div className="mx-auto max-w-7xl px-6 py-8 md:px-10 md:py-10">
 
-      {/* TOP BAR */}
-      <div className="mb-6 flex items-center justify-between">
-        <Navbar />
-      </div>
+        <div className="mb-6 flex items-center justify-between">
+          <Navbar />
+        </div>
 
-      {/* HEADER */}
-      <div className="mb-8">
-        <h1 className="mb-3 text-4xl font-extrabold tracking-tight text-slate-900 md:text-5xl">
-          Total Cost of Ownership Calculator
-        </h1>
+        <div className="mb-8">
+          <h1 className="mb-3 text-4xl font-extrabold tracking-tight text-slate-900 md:text-5xl">
+            Total Cost of Ownership Calculator
+          </h1>
 
-        <p className="max-w-3xl text-base leading-7 text-slate-700">
-          Estimate what your car really costs over a year using fuel, insurance, tax,
-          maintenance, tyres, repairs, and depreciation.
-        </p>
-      </div>
+          <p className="max-w-3xl text-base leading-7 text-slate-700">
+            Estimate what your car really costs over a year using fuel, insurance, tax,
+            maintenance, tyres, repairs, and depreciation.
+          </p>
+        </div>
 
         <div className="grid gap-6 lg:grid-cols-[1.1fr_1fr]">
+
           <section className={cardClass}>
-            <div className="mb-6">
-              <h2 className={sectionTitleClass}>Inputs</h2>
-              <p className={`mt-2 text-sm ${mutedTextClass}`}>
-                Enter your own figures or use the defaults as a starting point.
-              </p>
-            </div>
+            <h2 className={`${sectionTitleClass} mb-4`}>Inputs</h2>
 
-            <div className="grid gap-5 md:grid-cols-2">
-              <div>
-                <label className={labelClass}>Car value (£)</label>
-                <input className={inputClass} type="number" value={carValue} onChange={(e) => setCarValue(Number(e.target.value))} />
-              </div>
+            <CarInputs
+              data={car}
+              setData={setCar}
+              inputClass={inputClass}
+              labelClass={labelClass}
+              handleFuelTypeChange={handleFuelTypeChange}
+            />
 
-              {/* UPDATED FIELD */}
-              <div>
-                <label className={labelClass}>Car year</label>
-                <select
-                  className={inputClass}
-                  value={carYear}
-                  onChange={(e) => setCarYear(Number(e.target.value))}
-                >
-                  {Array.from({ length: 30 }, (_, i) => currentYear - i).map((year) => (
-                    <option key={year} value={year}>
-                      {year}
-                    </option>
-                  ))}
-                </select>
 
-                <div className="mt-2 text-sm text-slate-600">
-                  Car age: {carAge} {carAge === 1 ? "year" : "years"}
-                </div>
-              </div>
-
-              <div>
-                <label className={labelClass}>Current mileage</label>
-                <input className={inputClass} type="number" value={currentMileage} onChange={(e) => setCurrentMileage(Number(e.target.value))} />
-              </div>
-
-              <div>
-                <label className={labelClass}>Car type</label>
-                <select className={inputClass} value={carType} onChange={(e) => setCarType(e.target.value)}>
-                  <option value="standard">Standard</option>
-                  <option value="luxury">Luxury</option>
-                  <option value="performance">Performance</option>
-                </select>
-              </div>
-
-              <div>
-                <label className={labelClass}>Annual mileage</label>
-                <input className={inputClass} type="number" value={annualMiles} onChange={(e) => setAnnualMiles(Number(e.target.value))} />
-              </div>
-
-              <div>
-                <label className={labelClass}>Fuel type</label>
-                <select className={inputClass} value={fuelType} onChange={(e) => handleFuelTypeChange(e.target.value)}>
-                  <option value="petrol">Petrol</option>
-                  <option value="diesel">Diesel</option>
-                  <option value="premium_petrol">Premium petrol</option>
-                  <option value="electric">Electric</option>
-                </select>
-              </div>
-
-              <div>
-                <label className={labelClass}>{efficiencyLabel}</label>
-                <input className={inputClass} type="number" step="0.1" value={efficiency} onChange={(e) => setEfficiency(Number(e.target.value))} />
-              </div>
-
-              <div>
-                <label className={labelClass}>{fuelTypeLabel}</label>
-                <input className={inputClass} type="number" step="0.1" value={fuelPrice} onChange={(e) => setFuelPrice(Number(e.target.value))} />
-              </div>
-            </div>
-
-            <div className="my-8 border-t border-slate-300" />
-
-            <div className="grid gap-5 md:grid-cols-2">
-              <div>
-                <label className={labelClass}>Insurance (£/year)</label>
-                <input className={inputClass} type="number" value={insurance} onChange={(e) => setInsurance(Number(e.target.value))} />
-              </div>
-
-              <div>
-                <label className={labelClass}>Tax / VED (£/year)</label>
-                <input className={inputClass} type="number" value={tax} onChange={(e) => setTax(Number(e.target.value))} />
-              </div>
-
-              <div>
-                <label className={labelClass}>Servicing (£/year)</label>
-                <input className={inputClass} type="number" value={servicing} onChange={(e) => setServicing(Number(e.target.value))} />
-              </div>
-
-              <div>
-                <label className={labelClass}>Tyres (£/year)</label>
-                <input className={inputClass} type="number" value={tyres} onChange={(e) => setTyres(Number(e.target.value))} />
-              </div>
-
-              <div className="md:col-span-2">
-                <label className={labelClass}>Repairs buffer (£/year)</label>
-                <input className={inputClass} type="number" value={repairsBuffer} onChange={(e) => setRepairsBuffer(Number(e.target.value))} />
-              </div>
-            </div>
           </section>
 
           <div className="space-y-6">
+
             <section className={cardClass}>
-              <div className="mb-5">
-                <h2 className={sectionTitleClass}>Results</h2>
-                <p className={`mt-2 text-sm ${mutedTextClass}`}>
-                  A simple estimate of what the car costs you across a full year.
-                </p>
-              </div>
+              <h2 className={`${sectionTitleClass} mb-4`}>Results</h2>
 
               <div className="grid gap-4 md:grid-cols-3">
                 <div className={metricCardClass}>
-                  <div className="text-sm font-medium text-slate-700">Annual cost</div>
-                  <div className="mt-2 text-3xl font-bold text-slate-900">
-                    {currency(results.annualTotal)}
-                  </div>
+                  <div>Annual cost</div>
+                  <div className="text-3xl font-bold">{currency(results.annualTotal)}</div>
                 </div>
 
                 <div className={metricCardClass}>
-                  <div className="text-sm font-medium text-slate-700">Monthly cost</div>
-                  <div className="mt-2 text-3xl font-bold text-slate-900">
-                    {currency(results.monthlyTotal)}
-                  </div>
+                  <div>Monthly cost</div>
+                  <div className="text-3xl font-bold">{currency(results.monthlyTotal)}</div>
                 </div>
 
                 <div className={metricCardClass}>
-                  <div className="text-sm font-medium text-slate-700">Cost per mile</div>
-                  <div className="mt-2 text-3xl font-bold text-slate-900">
-                    {currency2(results.costPerMile)}
-                  </div>
+                  <div>Cost per mile</div>
+                  <div className="text-3xl font-bold">{currency2(results.costPerMile)}</div>
                 </div>
               </div>
 
-              <div className="mt-5 rounded-2xl border border-slate-300 bg-slate-50 p-5">
-                <div className="text-sm font-semibold text-slate-800">What this means</div>
-                <p className="mt-2 text-sm leading-6 text-slate-700">{interpretation}</p>
-
-                {mileageWarning && (
-                  <div className="mt-3 rounded-xl bg-amber-100 border border-amber-300 p-3 text-sm text-amber-800">
-                    {mileageWarning}
-                  </div>
-                )}
-              </div>
+              {mileageWarning && (
+                <div className="mt-4 text-sm text-amber-700">
+                  {mileageWarning}
+                </div>
+              )}
             </section>
 
-            <section className={cardClass}>
-              <div className="mb-5">
-                <h2 className={sectionTitleClass}>Breakdown</h2>
-                <p className={`mt-2 text-sm ${mutedTextClass}`}>
-                  See where the biggest costs are coming from.
-                </p>
-              </div>
+<section className={cardClass}>
+  <div className="mb-5">
+    <h2 className={sectionTitleClass}>Breakdown</h2>
+    <p className={`mt-2 text-sm ${mutedTextClass}`}>
+      See where the biggest costs are coming from.
+    </p>
+  </div>
 
-              <div className="space-y-4 text-sm">
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-700">Fuel / energy</span>
-                  <span className="font-semibold text-slate-900">
-                    {currency(results.annualFuelCost)}
-                  </span>
-                </div>
+  <div className="space-y-4 text-sm">
 
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-700">Insurance</span>
-                  <span className="font-semibold text-slate-900">{currency(insurance)}</span>
-                </div>
+    <div className="flex items-center justify-between">
+      <span className="text-slate-700">Fuel / energy</span>
+      <span className="font-semibold text-slate-900">
+        {currency(results.annualFuelCost)}
+      </span>
+    </div>
 
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-700">Tax / VED</span>
-                  <span className="font-semibold text-slate-900">{currency(tax)}</span>
-                </div>
+    <div className="flex items-center justify-between">
+      <span className="text-slate-700">Insurance</span>
+      <span className="font-semibold text-slate-900">
+        {currency(car.insurance)}
+      </span>
+    </div>
 
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-700">Servicing, tyres, repairs</span>
-                  <span className="font-semibold text-slate-900">
-                    {currency(annualMaintenance)}
-                  </span>
-                </div>
+    <div className="flex items-center justify-between">
+      <span className="text-slate-700">Tax / VED</span>
+      <span className="font-semibold text-slate-900">
+        {currency(car.tax)}
+      </span>
+    </div>
 
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-700">Depreciation</span>
-                  <span className="font-semibold text-slate-900">
-                    {currency(results.annualDepreciation)}
-                  </span>
-                </div>
+    <div className="flex items-center justify-between">
+      <span className="text-slate-700">Servicing, tyres, repairs</span>
+      <span className="font-semibold text-slate-900">
+        {currency(annualMaintenance)}
+      </span>
+    </div>
 
-                <div className="border-t border-slate-300 pt-4">
-                  <div className="flex items-center justify-between text-base font-bold text-slate-900">
-                    <span>Total annual ownership cost</span>
-                    <span>{currency(results.annualTotal)}</span>
-                  </div>
-                </div>
-              </div>
-            </section>
+    <div className="flex items-center justify-between">
+      <span className="text-slate-700">Depreciation</span>
+      <span className="font-semibold text-slate-900">
+        {currency(results.annualDepreciation)}
+      </span>
+    </div>
 
-            <section className={cardClass}>
-              <div className="mb-5">
-                <h2 className={sectionTitleClass}>Assumptions</h2>
-              </div>
+    <div className="border-t border-slate-300 pt-4">
+      <div className="flex items-center justify-between text-base font-bold text-slate-900">
+        <span>Total annual ownership cost</span>
+        <span>{currency(results.annualTotal)}</span>
+      </div>
+    </div>
 
-              <div className="space-y-3 text-sm leading-6 text-slate-700">
-                <p>
-                  Depreciation is estimated from car age, mileage, and car type,
-                  with newer and lower mileage cars typically losing value faster.
-                </p>
-                <p>
-                  Fuel defaults are editable, so users can plug in current local prices instead
-                  of relying on a fixed assumption.
-                </p>
-                <p>
-                  For electric cars, this version uses a simple energy model with editable
-                  electricity price and efficiency.
-                </p>
-              </div>
-            </section>
+  </div>
+</section>
+
+<section className={cardClass}>
+  <div className="mb-5">
+    <h2 className={sectionTitleClass}>Assumptions</h2>
+  </div>
+
+  <div className="space-y-3 text-sm leading-6 text-slate-700">
+    <p>
+      Depreciation is estimated from car age, mileage, and car type,
+      with newer and lower mileage cars typically losing value faster.
+    </p>
+    <p>
+      Fuel defaults are editable, so users can plug in current local prices instead
+      of relying on a fixed assumption.
+    </p>
+    <p>
+      For electric cars, this version uses a simple energy model with editable
+      electricity price and efficiency.
+    </p>
+  </div>
+</section>
+
           </div>
         </div>
       </div>

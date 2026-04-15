@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useCarCost } from "../../hooks/useCarCost";
 import Navbar from "../../components/Navbar";
 import CarInputs from "../../components/CarInputs";
@@ -24,10 +24,12 @@ function currency2(value: number) {
 
 export default function ComparePage() {
 
+  const currentYear = new Date().getFullYear();
+
   // CAR 1
   const [car1, setCar1] = useState({
     carValue: 18000,
-    carAge: 5,
+    carYear: currentYear - 5,
     annualMiles: 10000,
     currentMileage: 50000,
     carType: "standard",
@@ -46,8 +48,33 @@ export default function ComparePage() {
     ...car1,
   });
 
-  const results1 = useCarCost(car1);
-  const results2 = useCarCost(car2);
+  // DERIVED AGE
+  const car1Age = useMemo(() => currentYear - car1.carYear, [car1.carYear, currentYear]);
+  const car2Age = useMemo(() => currentYear - car2.carYear, [car2.carYear, currentYear]);
+
+  const fuelDefaults = {
+    petrol: 158.5,
+    diesel: 191.5,
+    premium_petrol: 171.0,
+    electric: 7.5,
+  } as const;
+
+  function handleFuelTypeChange(setter: any) {
+    return (value: string) => {
+      setter((prev: any) => ({
+        ...prev,
+        fuelType: value,
+        fuelPrice:
+          value === "electric"
+            ? fuelDefaults.electric
+            : fuelDefaults[value as keyof typeof fuelDefaults],
+        efficiency: value === "electric" ? 3.5 : prev.efficiency < 8 ? 38 : prev.efficiency,
+      }));
+    };
+  }
+
+  const results1 = useCarCost({ ...car1, carAge: car1Age });
+  const results2 = useCarCost({ ...car2, carAge: car2Age });
 
   const cardClass =
     "rounded-3xl border border-slate-300 bg-white p-6 shadow-md shadow-slate-200/70";
@@ -75,7 +102,7 @@ export default function ComparePage() {
           </p>
         </div>
 
-        {/* CAR INPUTS */}
+        {/* INPUTS */}
         <div className="grid gap-6 lg:grid-cols-2">
 
           {/* Car 1 */}
@@ -89,7 +116,12 @@ export default function ComparePage() {
               setData={setCar1}
               inputClass={inputClass}
               labelClass={labelClass}
+              handleFuelTypeChange={handleFuelTypeChange(setCar1)}
             />
+
+            <div className="mt-4 text-sm text-slate-600">
+              Age: {car1Age} {car1Age === 1 ? "year" : "years"}
+            </div>
           </section>
 
           {/* Car 2 */}
@@ -103,7 +135,12 @@ export default function ComparePage() {
               setData={setCar2}
               inputClass={inputClass}
               labelClass={labelClass}
+              handleFuelTypeChange={handleFuelTypeChange(setCar2)}
             />
+
+            <div className="mt-4 text-sm text-slate-600">
+              Age: {car2Age} {car2Age === 1 ? "year" : "years"}
+            </div>
           </section>
 
         </div>
