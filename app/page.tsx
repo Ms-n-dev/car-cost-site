@@ -27,8 +27,8 @@ export default function Page() {
   const [carValue, setCarValue] = useState(18000);
   const [carAge, setCarAge] = useState(5);
   const [annualMiles, setAnnualMiles] = useState(10000);
-  const [currentMileage, setCurrentMileage] = useState(50000); // NEW
-  const [carType, setCarType] = useState("standard"); // NEW
+  const [currentMileage, setCurrentMileage] = useState(50000);
+  const [carType, setCarType] = useState("standard");
   const [fuelType, setFuelType] = useState("petrol");
   const [efficiency, setEfficiency] = useState(38);
   const [fuelPrice, setFuelPrice] = useState(158.5);
@@ -50,7 +50,7 @@ export default function Page() {
 
   const efficiencyLabel = fuelType === "electric" ? "Efficiency (mi/kWh)" : "MPG";
 
-  // EXISTING AGE-BASED DEPRECIATION (UNCHANGED)
+  // AGE depreciation
   const depreciationRate = useMemo(() => {
     if (carAge <= 2) return 0.18;
     if (carAge <= 5) return 0.12;
@@ -58,7 +58,7 @@ export default function Page() {
     return 0.05;
   }, [carAge]);
 
-  // NEW: Mileage factor
+  // CURRENT mileage factor
   const mileageFactor = useMemo(() => {
     if (currentMileage <= 30000) return 1.25;
     if (currentMileage <= 80000) return 1.0;
@@ -66,16 +66,24 @@ export default function Page() {
     return 0.6;
   }, [currentMileage]);
 
-  // NEW: Car type factor (light touch for now)
+  // Car type factor
   const carTypeFactor = useMemo(() => {
     if (carType === "luxury") return 1.15;
     if (carType === "performance") return 1.2;
     return 1.0;
   }, [carType]);
 
+  // FUTURE usage factor (NEW CORE UPGRADE)
+  const usageFactor = useMemo(() => {
+    if (annualMiles <= 6000) return 0.9;
+    if (annualMiles <= 12000) return 1.0;
+    if (annualMiles <= 20000) return 1.15;
+    if (annualMiles <= 30000) return 1.3;
+    return 1.5;
+  }, [annualMiles]);
+
   const annualMaintenance = useMemo(() => {
-    const total = numberOrZero(servicing) + numberOrZero(tyres) + numberOrZero(repairsBuffer);
-    return total;
+    return numberOrZero(servicing) + numberOrZero(tyres) + numberOrZero(repairsBuffer);
   }, [servicing, tyres, repairsBuffer]);
 
   const results = useMemo(() => {
@@ -94,12 +102,13 @@ export default function Page() {
       annualFuelCost = litresUsed * (numberOrZero(fuelPrice) / 100);
     }
 
-    // UPDATED: depreciation now includes mileage + car type
+    // FINAL depreciation model
     const annualDepreciation =
       numberOrZero(carValue) *
       depreciationRate *
       mileageFactor *
-      carTypeFactor;
+      carTypeFactor *
+      usageFactor;
 
     const annualTotal =
       annualFuelCost +
@@ -130,6 +139,7 @@ export default function Page() {
     depreciationRate,
     mileageFactor,
     carTypeFactor,
+    usageFactor,
   ]);
 
   const interpretation = useMemo(() => {
@@ -150,16 +160,35 @@ export default function Page() {
     )} per month and ${currency2(results.costPerMile)} per mile.`;
   }, [results]);
 
-  // NEW: Mileage warning
+  // SMART mileage warning (current + future)
   const mileageWarning = useMemo(() => {
+    const lowerNow = carAge * 6000;
+    const upperNow = carAge * 14000;
+
+    const projectedMileage = currentMileage + annualMiles;
+    const nextYearAge = carAge + 1;
+
+    const lowerNext = nextYearAge * 6000;
+    const upperNext = nextYearAge * 14000;
+
     if (currentMileage > 120000) {
       return "High mileage car — depreciation slows, but repair risk increases.";
     }
-    if (currentMileage < 30000 && carAge > 5) {
-      return "Very low mileage for its age — this may positively impact resale value.";
+
+    if (currentMileage > upperNow || projectedMileage > upperNext) {
+      return "High mileage for its age — your driving may accelerate depreciation.";
     }
+
+    if (
+      currentMileage < lowerNow &&
+      projectedMileage < lowerNext &&
+      carAge > 2
+    ) {
+      return "Low mileage for its age — this may positively impact resale value.";
+    }
+
     return null;
-  }, [currentMileage, carAge]);
+  }, [currentMileage, carAge, annualMiles]);
 
   function handleFuelTypeChange(value: string) {
     setFuelType(value);
@@ -189,6 +218,8 @@ export default function Page() {
   return (
     <main className="min-h-screen bg-slate-100 text-slate-900">
       <div className="mx-auto max-w-7xl px-6 py-8 md:px-10 md:py-10">
+
+        {/* UI unchanged below */}
         <div className="mb-8">
           <div className="mb-4 inline-flex rounded-full border border-slate-300 bg-white px-4 py-1.5 text-sm font-semibold text-slate-700 shadow-sm">
             V1
