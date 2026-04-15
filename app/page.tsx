@@ -24,8 +24,10 @@ function numberOrZero(value: number) {
 }
 
 export default function Page() {
+  const currentYear = new Date().getFullYear();
+
   const [carValue, setCarValue] = useState(18000);
-  const [carAge, setCarAge] = useState(5);
+  const [carYear, setCarYear] = useState(currentYear - 5);
   const [annualMiles, setAnnualMiles] = useState(10000);
   const [currentMileage, setCurrentMileage] = useState(50000);
   const [carType, setCarType] = useState("standard");
@@ -37,6 +39,11 @@ export default function Page() {
   const [servicing, setServicing] = useState(350);
   const [tyres, setTyres] = useState(300);
   const [repairsBuffer, setRepairsBuffer] = useState(400);
+
+  // DERIVED AGE (replaces state)
+  const carAge = useMemo(() => {
+    return Math.max(currentYear - carYear, 0);
+  }, [carYear, currentYear]);
 
   const fuelDefaults = {
     petrol: 158.5,
@@ -73,7 +80,7 @@ export default function Page() {
     return 1.0;
   }, [carType]);
 
-  // FUTURE usage factor (NEW CORE UPGRADE)
+  // FUTURE usage factor
   const usageFactor = useMemo(() => {
     if (annualMiles <= 6000) return 0.9;
     if (annualMiles <= 12000) return 1.0;
@@ -102,7 +109,6 @@ export default function Page() {
       annualFuelCost = litresUsed * (numberOrZero(fuelPrice) / 100);
     }
 
-    // FINAL depreciation model
     const annualDepreciation =
       numberOrZero(carValue) *
       depreciationRate *
@@ -160,7 +166,6 @@ export default function Page() {
     )} per month and ${currency2(results.costPerMile)} per mile.`;
   }, [results]);
 
-  // SMART mileage warning (current + future)
   const mileageWarning = useMemo(() => {
     const lowerNow = carAge * 6000;
     const upperNow = carAge * 14000;
@@ -219,7 +224,6 @@ export default function Page() {
     <main className="min-h-screen bg-slate-100 text-slate-900">
       <div className="mx-auto max-w-7xl px-6 py-8 md:px-10 md:py-10">
 
-        {/* UI unchanged below */}
         <div className="mb-8">
           <div className="mb-4 inline-flex rounded-full border border-slate-300 bg-white px-4 py-1.5 text-sm font-semibold text-slate-700 shadow-sm">
             V1
@@ -250,15 +254,27 @@ export default function Page() {
                 <input className={inputClass} type="number" value={carValue} onChange={(e) => setCarValue(Number(e.target.value))} />
               </div>
 
+              {/* UPDATED INPUT */}
               <div>
-                <label className={labelClass}>Car age (years)</label>
-                <input className={inputClass} type="number" value={carAge} onChange={(e) => setCarAge(Number(e.target.value))} />
+                <label className={labelClass}>Car year</label>
+                <select
+                  className={inputClass}
+                  value={carYear}
+                  onChange={(e) => setCarYear(Number(e.target.value))}
+                >
+                  {Array.from({ length: 30 }, (_, i) => currentYear - i).map((year) => (
+                    <option key={year} value={year}>
+                      {year}
+                    </option>
+                  ))}
+                </select>
+
+                <div className="mt-2 text-sm text-slate-600">
+                  Car age: {carAge} {carAge === 1 ? "year" : "years"}
+                </div>
               </div>
 
-              <div>
-                <label className={labelClass}>Current mileage</label>
-                <input className={inputClass} type="number" value={currentMileage} onChange={(e) => setCurrentMileage(Number(e.target.value))} />
-              </div>
+              {/* everything else unchanged */}
 
               <div>
                 <label className={labelClass}>Car type</label>
