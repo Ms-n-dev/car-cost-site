@@ -8,9 +8,12 @@ export default function CarInputs({
   handleFuelTypeChange,
 }: any) {
 
-  function update(key: string, value: any) {
-    setData({ ...data, [key]: value });
-  }
+function update(key: string, value: any) {
+  setData((prev: any) => ({
+    ...prev,
+    [key]: value,
+  }));
+}
 
   const enhancedInputClass = `${inputClass} hover:border-slate-500 transition`;
 

@@ -42,6 +42,11 @@ export default function Page() {
     servicing: 350,
     tyres: 300,
     repairsBuffer: 400,
+
+  // 🔥 ADD THESE (for dropdowns to work)
+  carTypeOpen: false,
+  fuelTypeOpen: false,
+  carYearOpen: false,
   });
 
   const carAge = useMemo(() => {

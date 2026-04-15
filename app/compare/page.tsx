@@ -41,6 +41,9 @@ export default function ComparePage() {
     servicing: 350,
     tyres: 300,
     repairsBuffer: 400,
+    carTypeOpen: false,
+fuelTypeOpen: false,
+carYearOpen: false,
   });
 
   // CAR 2
