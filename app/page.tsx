@@ -220,25 +220,26 @@ export default function Page() {
   const sectionTitleClass = "text-2xl font-bold text-slate-900";
   const mutedTextClass = "text-slate-600";
 
-  return (
-    <main className="min-h-screen bg-slate-100 text-slate-900">
-      <div className="mx-auto max-w-7xl px-6 py-8 md:px-10 md:py-10">
+return (
+  <main className="min-h-screen bg-slate-100 text-slate-900">
+    <div className="mx-auto max-w-7xl px-6 py-8 md:px-10 md:py-10">
+
+      {/* TOP BAR */}
+      <div className="mb-6 flex items-center justify-between">
         <Navbar />
+      </div>
 
-        <div className="mb-8">
-          <div className="mb-4 inline-flex rounded-full border border-slate-300 bg-white px-4 py-1.5 text-sm font-semibold text-slate-700 shadow-sm">
-            V1
-          </div>
+      {/* HEADER */}
+      <div className="mb-8">
+        <h1 className="mb-3 text-4xl font-extrabold tracking-tight text-slate-900 md:text-5xl">
+          Total Cost of Ownership Calculator
+        </h1>
 
-          <h1 className="mb-3 text-4xl font-extrabold tracking-tight text-slate-900 md:text-5xl">
-            Total Cost of Ownership Calculator
-          </h1>
-
-          <p className="max-w-3xl text-base leading-7 text-slate-700">
-            Estimate what your car really costs over a year using fuel, insurance, tax,
-            maintenance, tyres, repairs, and depreciation.
-          </p>
-        </div>
+        <p className="max-w-3xl text-base leading-7 text-slate-700">
+          Estimate what your car really costs over a year using fuel, insurance, tax,
+          maintenance, tyres, repairs, and depreciation.
+        </p>
+      </div>
 
         <div className="grid gap-6 lg:grid-cols-[1.1fr_1fr]">
           <section className={cardClass}>
