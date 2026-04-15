@@ -27,6 +27,8 @@ export default function Page() {
   const [carValue, setCarValue] = useState(18000);
   const [carAge, setCarAge] = useState(5);
   const [annualMiles, setAnnualMiles] = useState(10000);
+  const [currentMileage, setCurrentMileage] = useState(50000); // NEW
+  const [carType, setCarType] = useState("standard"); // NEW
   const [fuelType, setFuelType] = useState("petrol");
   const [efficiency, setEfficiency] = useState(38);
   const [fuelPrice, setFuelPrice] = useState(158.5);
@@ -48,12 +50,28 @@ export default function Page() {
 
   const efficiencyLabel = fuelType === "electric" ? "Efficiency (mi/kWh)" : "MPG";
 
+  // EXISTING AGE-BASED DEPRECIATION (UNCHANGED)
   const depreciationRate = useMemo(() => {
     if (carAge <= 2) return 0.18;
     if (carAge <= 5) return 0.12;
     if (carAge <= 8) return 0.08;
     return 0.05;
   }, [carAge]);
+
+  // NEW: Mileage factor
+  const mileageFactor = useMemo(() => {
+    if (currentMileage <= 30000) return 1.25;
+    if (currentMileage <= 80000) return 1.0;
+    if (currentMileage <= 120000) return 0.75;
+    return 0.6;
+  }, [currentMileage]);
+
+  // NEW: Car type factor (light touch for now)
+  const carTypeFactor = useMemo(() => {
+    if (carType === "luxury") return 1.15;
+    if (carType === "performance") return 1.2;
+    return 1.0;
+  }, [carType]);
 
   const annualMaintenance = useMemo(() => {
     const total = numberOrZero(servicing) + numberOrZero(tyres) + numberOrZero(repairsBuffer);
@@ -76,7 +94,12 @@ export default function Page() {
       annualFuelCost = litresUsed * (numberOrZero(fuelPrice) / 100);
     }
 
-    const annualDepreciation = numberOrZero(carValue) * depreciationRate;
+    // UPDATED: depreciation now includes mileage + car type
+    const annualDepreciation =
+      numberOrZero(carValue) *
+      depreciationRate *
+      mileageFactor *
+      carTypeFactor;
 
     const annualTotal =
       annualFuelCost +
@@ -105,6 +128,8 @@ export default function Page() {
     annualMaintenance,
     carValue,
     depreciationRate,
+    mileageFactor,
+    carTypeFactor,
   ]);
 
   const interpretation = useMemo(() => {
@@ -124,6 +149,17 @@ export default function Page() {
       results.monthlyTotal
     )} per month and ${currency2(results.costPerMile)} per mile.`;
   }, [results]);
+
+  // NEW: Mileage warning
+  const mileageWarning = useMemo(() => {
+    if (currentMileage > 120000) {
+      return "High mileage car — depreciation slows, but repair risk increases.";
+    }
+    if (currentMileage < 30000 && carAge > 5) {
+      return "Very low mileage for its age — this may positively impact resale value.";
+    }
+    return null;
+  }, [currentMileage, carAge]);
 
   function handleFuelTypeChange(value: string) {
     setFuelType(value);
@@ -180,41 +216,36 @@ export default function Page() {
             <div className="grid gap-5 md:grid-cols-2">
               <div>
                 <label className={labelClass}>Car value (£)</label>
-                <input
-                  className={inputClass}
-                  type="number"
-                  value={carValue}
-                  onChange={(e) => setCarValue(Number(e.target.value))}
-                />
+                <input className={inputClass} type="number" value={carValue} onChange={(e) => setCarValue(Number(e.target.value))} />
               </div>
 
               <div>
                 <label className={labelClass}>Car age (years)</label>
-                <input
-                  className={inputClass}
-                  type="number"
-                  value={carAge}
-                  onChange={(e) => setCarAge(Number(e.target.value))}
-                />
+                <input className={inputClass} type="number" value={carAge} onChange={(e) => setCarAge(Number(e.target.value))} />
+              </div>
+
+              <div>
+                <label className={labelClass}>Current mileage</label>
+                <input className={inputClass} type="number" value={currentMileage} onChange={(e) => setCurrentMileage(Number(e.target.value))} />
+              </div>
+
+              <div>
+                <label className={labelClass}>Car type</label>
+                <select className={inputClass} value={carType} onChange={(e) => setCarType(e.target.value)}>
+                  <option value="standard">Standard</option>
+                  <option value="luxury">Luxury</option>
+                  <option value="performance">Performance</option>
+                </select>
               </div>
 
               <div>
                 <label className={labelClass}>Annual mileage</label>
-                <input
-                  className={inputClass}
-                  type="number"
-                  value={annualMiles}
-                  onChange={(e) => setAnnualMiles(Number(e.target.value))}
-                />
+                <input className={inputClass} type="number" value={annualMiles} onChange={(e) => setAnnualMiles(Number(e.target.value))} />
               </div>
 
               <div>
                 <label className={labelClass}>Fuel type</label>
-                <select
-                  className={inputClass}
-                  value={fuelType}
-                  onChange={(e) => handleFuelTypeChange(e.target.value)}
-                >
+                <select className={inputClass} value={fuelType} onChange={(e) => handleFuelTypeChange(e.target.value)}>
                   <option value="petrol">Petrol</option>
                   <option value="diesel">Diesel</option>
                   <option value="premium_petrol">Premium petrol</option>
@@ -224,24 +255,12 @@ export default function Page() {
 
               <div>
                 <label className={labelClass}>{efficiencyLabel}</label>
-                <input
-                  className={inputClass}
-                  type="number"
-                  step="0.1"
-                  value={efficiency}
-                  onChange={(e) => setEfficiency(Number(e.target.value))}
-                />
+                <input className={inputClass} type="number" step="0.1" value={efficiency} onChange={(e) => setEfficiency(Number(e.target.value))} />
               </div>
 
               <div>
                 <label className={labelClass}>{fuelTypeLabel}</label>
-                <input
-                  className={inputClass}
-                  type="number"
-                  step="0.1"
-                  value={fuelPrice}
-                  onChange={(e) => setFuelPrice(Number(e.target.value))}
-                />
+                <input className={inputClass} type="number" step="0.1" value={fuelPrice} onChange={(e) => setFuelPrice(Number(e.target.value))} />
               </div>
             </div>
 
@@ -250,52 +269,27 @@ export default function Page() {
             <div className="grid gap-5 md:grid-cols-2">
               <div>
                 <label className={labelClass}>Insurance (£/year)</label>
-                <input
-                  className={inputClass}
-                  type="number"
-                  value={insurance}
-                  onChange={(e) => setInsurance(Number(e.target.value))}
-                />
+                <input className={inputClass} type="number" value={insurance} onChange={(e) => setInsurance(Number(e.target.value))} />
               </div>
 
               <div>
                 <label className={labelClass}>Tax / VED (£/year)</label>
-                <input
-                  className={inputClass}
-                  type="number"
-                  value={tax}
-                  onChange={(e) => setTax(Number(e.target.value))}
-                />
+                <input className={inputClass} type="number" value={tax} onChange={(e) => setTax(Number(e.target.value))} />
               </div>
 
               <div>
                 <label className={labelClass}>Servicing (£/year)</label>
-                <input
-                  className={inputClass}
-                  type="number"
-                  value={servicing}
-                  onChange={(e) => setServicing(Number(e.target.value))}
-                />
+                <input className={inputClass} type="number" value={servicing} onChange={(e) => setServicing(Number(e.target.value))} />
               </div>
 
               <div>
                 <label className={labelClass}>Tyres (£/year)</label>
-                <input
-                  className={inputClass}
-                  type="number"
-                  value={tyres}
-                  onChange={(e) => setTyres(Number(e.target.value))}
-                />
+                <input className={inputClass} type="number" value={tyres} onChange={(e) => setTyres(Number(e.target.value))} />
               </div>
 
               <div className="md:col-span-2">
                 <label className={labelClass}>Repairs buffer (£/year)</label>
-                <input
-                  className={inputClass}
-                  type="number"
-                  value={repairsBuffer}
-                  onChange={(e) => setRepairsBuffer(Number(e.target.value))}
-                />
+                <input className={inputClass} type="number" value={repairsBuffer} onChange={(e) => setRepairsBuffer(Number(e.target.value))} />
               </div>
             </div>
           </section>
@@ -335,6 +329,12 @@ export default function Page() {
               <div className="mt-5 rounded-2xl border border-slate-300 bg-slate-50 p-5">
                 <div className="text-sm font-semibold text-slate-800">What this means</div>
                 <p className="mt-2 text-sm leading-6 text-slate-700">{interpretation}</p>
+
+                {mileageWarning && (
+                  <div className="mt-3 rounded-xl bg-amber-100 border border-amber-300 p-3 text-sm text-amber-800">
+                    {mileageWarning}
+                  </div>
+                )}
               </div>
             </section>
 
@@ -394,8 +394,8 @@ export default function Page() {
 
               <div className="space-y-3 text-sm leading-6 text-slate-700">
                 <p>
-                  Depreciation is estimated from car age, with newer cars losing value faster
-                  and older cars slowing down.
+                  Depreciation is estimated from car age, mileage, and car type,
+                  with newer and lower mileage cars typically losing value faster.
                 </p>
                 <p>
                   Fuel defaults are editable, so users can plug in current local prices instead
