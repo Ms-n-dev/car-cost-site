@@ -272,35 +272,41 @@ return (
         <div className="space-y-6">
 
           {/* RESULTS */}
-          <section className={cardClass}>
+<section className={cardClass}>
 
-            <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <h2 className={sectionTitleClass}>Results</h2>
+  <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <h2 className={sectionTitleClass}>Results</h2>
 
-              <div className="relative flex w-full sm:w-auto rounded-2xl bg-slate-200 p-1">
-                {[1, 2, 3, 4].map((year) => (
-                  <button
-                    key={year}
-                    onClick={() => setOwnershipYears(year)}
-                    className={`relative z-10 px-3 py-2 text-xs sm:text-sm font-medium ${
-                      ownershipYears === year
-                        ? "text-slate-900"
-                        : "text-slate-500"
-                    }`}
-                  >
-                    {year} year{year > 1 ? "s" : ""}
-                  </button>
-                ))}
+    {/* 🔥 Ownership slider */}
+    <div className="relative flex w-full sm:w-auto rounded-2xl bg-slate-200 p-1">
 
-                <motion.div
-                  layout
-                  className="absolute top-1 bottom-1 w-[calc(25%-6px)] rounded-xl bg-white shadow-sm"
-                  style={{
-                    left: `calc(${(ownershipYears - 1) * 25}% + 4px)`,
-                  }}
-                />
-              </div>
-            </div>
+      {[1, 2, 3, 4].map((year) => (
+        <button
+          key={year}
+          onClick={() => setOwnershipYears(year)}
+          className={`relative z-10 flex-1 sm:flex-none px-3 py-2 text-xs sm:text-sm font-medium transition active:scale-95 ${
+            ownershipYears === year
+              ? "text-slate-900 font-semibold"
+              : "text-slate-500"
+          }`}
+        >
+          {year} year{year > 1 ? "s" : ""}
+        </button>
+      ))}
+
+      {/* 🔥 Sliding pill */}
+      <motion.div
+        layout
+        className="absolute top-1 bottom-1 rounded-xl bg-white shadow-sm"
+        style={{
+          width: "25%",
+          left: `${(ownershipYears - 1) * 25}%`,
+        }}
+        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+      />
+
+    </div>
+  </div>
 
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               <div className={metricCardClass}>
