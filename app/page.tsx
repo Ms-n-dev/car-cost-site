@@ -109,16 +109,16 @@ export default function Page() {
   }, [car.servicing, car.tyres, car.repairsBuffer]);
 
   const results = useMemo(() => {
-    const carValue = Number(car.carValue) || 0;
-const annualMiles = Number(car.annualMiles) || 0;
-const currentMileage = Number(car.currentMileage) || 0;
-const efficiency = Number(car.efficiency) || 0;
-const fuelPrice = Number(car.fuelPrice) || 0;
-const insurance = Number(car.insurance) || 0;
-const tax = Number(car.tax) || 0;
-const servicing = Number(car.servicing) || 0;
-const tyres = Number(car.tyres) || 0;
-const repairsBuffer = Number(car.repairsBuffer) || 0;
+const carValue = +car.carValue || 0;
+const annualMiles = +car.annualMiles || 0;
+const currentMileage = +car.currentMileage || 0;
+const efficiency = +car.efficiency || 0;
+const fuelPrice = +car.fuelPrice || 0;
+const insurance = +car.insurance || 0;
+const tax = +car.tax || 0;
+const servicing = +car.servicing || 0;
+const tyres = +car.tyres || 0;
+const repairsBuffer = +car.repairsBuffer || 0;
     const years = Number(ownershipYears) || 1;
     const litresPerGallon = 4.54609;
 
@@ -180,7 +180,7 @@ const totalCost =
 
 const monthlyCost = totalCost / (years * 12);
 const costPerMile =
-  totalCost / Math.max(numberOrZero(car.annualMiles) * years, 1);
+  totalCost / Math.max(annualMiles * years, 1);
 
 return {
   totalCost,
@@ -188,6 +188,8 @@ return {
   costPerMile,
   totalDepreciation,
   totalFuelCost,
+  totalInsurance: insurance * years,
+  totalTax: tax * years,
 };
 }, [car, depreciationRate, mileageFactor, carTypeFactor, usageFactor, annualMaintenance, ownershipYears]);
 
@@ -247,7 +249,7 @@ return (
         </h1>
 
         <p className="max-w-3xl text-base leading-7 text-slate-700">
-          Estimate what your car really costs over time.
+          Compare the real cost of ownership side-by-side including fuel, insurance, tax, maintenance, and depreciation.
         </p>
       </div>
 
@@ -346,12 +348,12 @@ return (
 
               <div className="flex justify-between">
                 <span>Insurance</span>
-                <span>{currency(numberOrZero(car.insurance) * ownershipYears)}</span>
+                <span>{currency(results.totalInsurance)}</span>
               </div>
 
               <div className="flex justify-between">
                 <span>Tax</span>
-                <span>{currency(numberOrZero(car.tax) * ownershipYears)}</span>
+                <span>{currency(results.totalTax)}</span>
               </div>
 
               <div className="flex justify-between">
