@@ -11,7 +11,7 @@ export default function CarInputs({
 function update(key: string, value: any) {
   setData((prev: any) => ({
     ...prev,
-    [key]: value,
+    [key]: value === "" ? "" : value,
   }));
 }
 
@@ -29,7 +29,7 @@ function update(key: string, value: any) {
           className={enhancedInputClass}
           type="number"
           value={data.carValue ?? ""}
-          onChange={(e) => update("carValue", Number(e.target.value))}
+          onChange={(e) => update("carValue", e.target.value)}
         />
       </div>
 
@@ -79,7 +79,7 @@ function update(key: string, value: any) {
           className={enhancedInputClass}
           type="number"
           value={data.currentMileage ?? ""}
-          onChange={(e) => update("currentMileage", Number(e.target.value))}
+          onChange={(e) => update("currentMileage", e.target.value)}
         />
       </div>
 
@@ -124,7 +124,7 @@ function update(key: string, value: any) {
           className={enhancedInputClass}
           type="number"
           value={data.annualMiles ?? ""}
-          onChange={(e) => update("annualMiles", Number(e.target.value))}
+          onChange={(e) => update("annualMiles", e.target.value)}
         />
       </div>
 
@@ -172,7 +172,7 @@ function update(key: string, value: any) {
           className={enhancedInputClass}
           type="number"
           value={data.efficiency ?? ""}
-          onChange={(e) => update("efficiency", Number(e.target.value))}
+          onChange={(e) => update("efficiency", e.target.value)}
         />
       </div>
 
@@ -188,7 +188,7 @@ function update(key: string, value: any) {
           className={enhancedInputClass}
           type="number"
           value={data.fuelPrice ?? ""}
-          onChange={(e) => update("fuelPrice", Number(e.target.value))}
+          onChange={(e) => update("fuelPrice", e.target.value)}
         />
       </div>
 
@@ -199,7 +199,7 @@ function update(key: string, value: any) {
           className={enhancedInputClass}
           type="number"
           value={data.insurance ?? ""}
-          onChange={(e) => update("insurance", Number(e.target.value))}
+          onChange={(e) => update("insurance", e.target.value)}
         />
       </div>
 
@@ -209,7 +209,7 @@ function update(key: string, value: any) {
           className={enhancedInputClass}
           type="number"
           value={data.tax ?? ""}
-          onChange={(e) => update("tax", Number(e.target.value))}
+          onChange={(e) => update("tax", e.target.value)}
         />
       </div>
 
@@ -219,7 +219,7 @@ function update(key: string, value: any) {
           className={enhancedInputClass}
           type="number"
           value={data.servicing ?? ""}
-          onChange={(e) => update("servicing", Number(e.target.value))}
+          onChange={(e) => update("servicing", e.target.value)}
         />
       </div>
 
@@ -229,7 +229,7 @@ function update(key: string, value: any) {
           className={enhancedInputClass}
           type="number"
           value={data.tyres ?? ""}
-          onChange={(e) => update("tyres", Number(e.target.value))}
+          onChange={(e) => update("tyres", e.target.value)}
         />
       </div>
 
@@ -239,7 +239,7 @@ function update(key: string, value: any) {
           className={enhancedInputClass}
           type="number"
           value={data.repairsBuffer ?? ""}
-          onChange={(e) => update("repairsBuffer", Number(e.target.value))}
+          onChange={(e) => update("repairsBuffer", e.target.value)}
         />
       </div>
 
