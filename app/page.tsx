@@ -278,34 +278,33 @@ return (
     <h2 className={sectionTitleClass}>Results</h2>
 
     {/* 🔥 Ownership slider */}
-    <div className="relative flex w-full sm:w-auto rounded-2xl bg-slate-200 p-1">
+    <div className="relative flex w-full rounded-2xl bg-slate-200 p-1">
 
-      {[1, 2, 3, 4].map((year) => (
-        <button
-          key={year}
-          onClick={() => setOwnershipYears(year)}
-          className={`relative z-10 flex-1 sm:flex-none px-3 py-2 text-xs sm:text-sm font-medium transition active:scale-95 ${
-            ownershipYears === year
-              ? "text-slate-900 font-semibold"
-              : "text-slate-500"
-          }`}
-        >
-          {year} year{year > 1 ? "s" : ""}
-        </button>
-      ))}
+  {[1, 2, 3, 4].map((year) => (
+    <button
+      key={year}
+      onClick={() => setOwnershipYears(year)}
+      className={`relative z-10 flex-1 whitespace-nowrap px-2 sm:px-4 py-2 text-xs sm:text-sm font-medium transition active:scale-95 ${
+        ownershipYears === year
+          ? "text-slate-900 font-semibold"
+          : "text-slate-500"
+      }`}
+    >
+      {year} year{year > 1 ? "s" : ""}
+    </button>
+  ))}
 
-      {/* 🔥 Sliding pill */}
-      <motion.div
-        layout
-        className="absolute top-1 bottom-1 rounded-xl bg-white shadow-sm"
-        style={{
-          width: "25%",
-          left: `${(ownershipYears - 1) * 25}%`,
-        }}
-        transition={{ type: "spring", stiffness: 300, damping: 30 }}
-      />
+  <motion.div
+    layout
+    className="absolute top-1 bottom-1 rounded-xl bg-white shadow-sm"
+    style={{
+      width: "25%",
+      left: `${(ownershipYears - 1) * 25}%`,
+    }}
+    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+  />
 
-    </div>
+</div>
   </div>
 
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
