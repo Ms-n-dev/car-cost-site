@@ -143,34 +143,38 @@ export default function Page() {
     };
   }, [car, depreciationRate, mileageFactor, carTypeFactor, usageFactor, annualMaintenance]);
 
-  const mileageWarning = useMemo(() => {
-    const lowerNow = carAge * 6000;
-    const upperNow = carAge * 14000;
+const mileageWarning = useMemo(() => {
+  const currentMileage = Number(car.currentMileage) || 0;
+  const annualMiles = Number(car.annualMiles) || 0;
+  const age = Number(carAge) || 0;
 
-    const projectedMileage = car.currentMileage + car.annualMiles;
-    const nextYearAge = carAge + 1;
+  const lowerNow = age * 6000;
+  const upperNow = age * 14000;
 
-    const lowerNext = nextYearAge * 6000;
-    const upperNext = nextYearAge * 14000;
+  const projectedMileage = currentMileage + annualMiles;
+  const nextYearAge = age + 1;
 
-    if (car.currentMileage > 120000) {
-      return "High mileage car — depreciation slows, but repair risk increases.";
-    }
+  const lowerNext = nextYearAge * 6000;
+  const upperNext = nextYearAge * 14000;
 
-    if (car.currentMileage > upperNow || projectedMileage > upperNext) {
-      return "High mileage for its age — your driving may accelerate depreciation.";
-    }
+  if (currentMileage > 120000) {
+    return "High mileage car — depreciation slows, but repair risk increases.";
+  }
 
-    if (
-      car.currentMileage < lowerNow &&
-      projectedMileage < lowerNext &&
-      carAge > 2
-    ) {
-      return "Low mileage for its age — this may positively impact resale value.";
-    }
+  if (currentMileage > upperNow || projectedMileage > upperNext) {
+    return "High mileage for its age — your driving may accelerate depreciation.";
+  }
 
-    return null;
-  }, [car, carAge]);
+  if (
+    currentMileage < lowerNow &&
+    projectedMileage < lowerNext &&
+    age > 2
+  ) {
+    return "Low mileage for its age — this may positively impact resale value.";
+  }
+
+  return null;
+}, [car, carAge]);
 
   const cardClass =
     "rounded-3xl border border-slate-300 bg-white p-6 shadow-md shadow-slate-200/70";
