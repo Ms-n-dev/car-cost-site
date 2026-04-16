@@ -364,16 +364,50 @@ return (
                 <span>{currency(results.totalDepreciation)}</span>
               </div>
 
+              <div className="border-t border-slate-300 pt-4 mt-4">
+  <div className="flex items-center justify-between text-base font-bold text-slate-900">
+    <span>Total ownership cost ({ownershipYears} yr)</span>
+    <span>{currency(results.totalCost)}</span>
+  </div>
+</div>
+
+
             </div>
           </section>
 
           {/* ASSUMPTIONS */}
           <section className={cardClass}>
-            <h2 className={sectionTitleClass}>Assumptions</h2>
-            <p className="text-sm mt-2 text-slate-700">
-              Depreciation is estimated based on age, mileage, and usage.
-            </p>
-          </section>
+  <div className="mb-5">
+    <h2 className={sectionTitleClass}>Assumptions</h2>
+  </div>
+
+  <div className="space-y-3 text-sm leading-6 text-slate-700">
+    <p>
+      Depreciation is estimated from car age, mileage, and car type,
+      with newer and lower mileage cars typically losing value faster.
+    </p>
+
+    <p>
+      Mileage is projected over the selected ownership period, so higher
+      annual mileage will increase both running costs and depreciation.
+    </p>
+
+    <p>
+      Fuel costs are based on your entered efficiency and fuel price,
+      and scale with your annual mileage.
+    </p>
+
+    <p>
+      Maintenance includes servicing, tyres, and a repair buffer, and is
+      assumed to remain consistent each year.
+    </p>
+
+    <p>
+      All values are estimates and do not account for unexpected repairs,
+      market changes, or resale timing.
+    </p>
+  </div>
+</section>
 
         </div>
 
