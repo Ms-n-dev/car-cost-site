@@ -274,15 +274,15 @@ return (
           {/* RESULTS */}
           <section className={cardClass}>
 
-            <div className="mb-4 flex items-center justify-between">
+            <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <h2 className={sectionTitleClass}>Results</h2>
 
-              <div className="relative flex rounded-2xl bg-slate-200 p-1">
+              <div className="relative flex w-full sm:w-auto rounded-2xl bg-slate-200 p-1">
                 {[1, 2, 3, 4].map((year) => (
                   <button
                     key={year}
                     onClick={() => setOwnershipYears(year)}
-                    className={`relative z-10 px-4 py-2 text-sm font-medium ${
+                    className={`relative z-10 px-3 py-2 text-xs sm:text-sm font-medium ${
                       ownershipYears === year
                         ? "text-slate-900"
                         : "text-slate-500"
@@ -302,24 +302,24 @@ return (
               </div>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               <div className={metricCardClass}>
                 <div>Total cost ({ownershipYears} yr)</div>
-                <div className="text-3xl font-bold">
+                <div className="text-2xl sm:text-3xl font-bold">
                   {currency(results.totalCost)}
                 </div>
               </div>
 
               <div className={metricCardClass}>
                 <div>Monthly cost</div>
-                <div className="text-3xl font-bold">
+                <div className="text-2xl sm:text-3xl font-bold">
                   {currency(results.monthlyCost)}
                 </div>
               </div>
 
               <div className={metricCardClass}>
                 <div>Cost per mile</div>
-                <div className="text-3xl font-bold">
+                <div className="text-2xl sm:text-3xl font-bold">
                   {currency2(results.costPerMile)}
                 </div>
               </div>
@@ -339,7 +339,7 @@ return (
               Breakdown ({ownershipYears} yr)
             </h2>
 
-            <div className="space-y-3 mt-4 text-sm">
+            <div className="space-y-4 mt-4 text-sm sm:text-base">
 
               <div className="flex justify-between">
                 <span>Fuel</span>
