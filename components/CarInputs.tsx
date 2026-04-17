@@ -8,10 +8,27 @@ export default function CarInputs({
   handleFuelTypeChange,
 }: any) {
 
+  const numericFields = [
+  "carValue",
+  "currentMileage",
+  "annualMiles",
+  "efficiency",
+  "fuelPrice",
+  "insurance",
+  "tax",
+  "servicing",
+  "tyres",
+  "repairsBuffer",
+];
+
 function update(key: string, value: any) {
   setData((prev: any) => ({
     ...prev,
-    [key]: value === "" ? "" : value,
+    [key]: numericFields.includes(key)
+      ? value === ""
+        ? ""
+        : Number(value)
+      : value,
   }));
 }
 
@@ -28,8 +45,9 @@ function update(key: string, value: any) {
         <input
           className={enhancedInputClass}
           type="number"
-          value={data.carValue ?? ""}
+          value={data.carValue === "" ? "" : data.carValue}
           onChange={(e) => update("carValue", e.target.value)}
+          onWheel={(e) => e.currentTarget.blur()}
         />
       </div>
 
@@ -78,8 +96,9 @@ function update(key: string, value: any) {
         <input
           className={enhancedInputClass}
           type="number"
-          value={data.currentMileage ?? ""}
+          value={data.currentMileage === "" ? "" : data.currentMileage}
           onChange={(e) => update("currentMileage", e.target.value)}
+          onWheel={(e) => e.currentTarget.blur()}
         />
       </div>
 
@@ -123,8 +142,9 @@ function update(key: string, value: any) {
         <input
           className={enhancedInputClass}
           type="number"
-          value={data.annualMiles ?? ""}
+            value={data.annualMiles === "" ? "" : data.annualMiles}
           onChange={(e) => update("annualMiles", e.target.value)}
+          onWheel={(e) => e.currentTarget.blur()}
         />
       </div>
 
@@ -171,8 +191,9 @@ function update(key: string, value: any) {
         <input
           className={enhancedInputClass}
           type="number"
-          value={data.efficiency ?? ""}
+            value={data.efficiency === "" ? "" : data.efficiency}
           onChange={(e) => update("efficiency", e.target.value)}
+          onWheel={(e) => e.currentTarget.blur()}
         />
       </div>
 
@@ -187,8 +208,9 @@ function update(key: string, value: any) {
         <input
           className={enhancedInputClass}
           type="number"
-          value={data.fuelPrice ?? ""}
+            value={data.fuelPrice === "" ? "" : data.fuelPrice}
           onChange={(e) => update("fuelPrice", e.target.value)}
+          onWheel={(e) => e.currentTarget.blur()}
         />
       </div>
 
@@ -198,8 +220,9 @@ function update(key: string, value: any) {
         <input
           className={enhancedInputClass}
           type="number"
-          value={data.insurance ?? ""}
+            value={data.insurance === "" ? "" : data.insurance}
           onChange={(e) => update("insurance", e.target.value)}
+          onWheel={(e) => e.currentTarget.blur()}
         />
       </div>
 
@@ -208,8 +231,9 @@ function update(key: string, value: any) {
         <input
           className={enhancedInputClass}
           type="number"
-          value={data.tax ?? ""}
+            value={data.tax === "" ? "" : data.tax}
           onChange={(e) => update("tax", e.target.value)}
+          onWheel={(e) => e.currentTarget.blur()}
         />
       </div>
 
@@ -218,8 +242,9 @@ function update(key: string, value: any) {
         <input
           className={enhancedInputClass}
           type="number"
-          value={data.servicing ?? ""}
+            value={data.servicing === "" ? "" : data.servicing}
           onChange={(e) => update("servicing", e.target.value)}
+          onWheel={(e) => e.currentTarget.blur()}
         />
       </div>
 
@@ -228,8 +253,9 @@ function update(key: string, value: any) {
         <input
           className={enhancedInputClass}
           type="number"
-          value={data.tyres ?? ""}
+            value={data.tyres === "" ? "" : data.tyres}
           onChange={(e) => update("tyres", e.target.value)}
+          onWheel={(e) => e.currentTarget.blur()}
         />
       </div>
 
@@ -238,8 +264,9 @@ function update(key: string, value: any) {
         <input
           className={enhancedInputClass}
           type="number"
-          value={data.repairsBuffer ?? ""}
+            value={data.repairsBuffer === "" ? "" : data.repairsBuffer}
           onChange={(e) => update("repairsBuffer", e.target.value)}
+          onWheel={(e) => e.currentTarget.blur()}
         />
       </div>
 

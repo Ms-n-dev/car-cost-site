@@ -29,25 +29,28 @@ export function useCarCost({
   const numTyres = Number(tyres) || 0;
   const numRepairsBuffer = Number(repairsBuffer) || 0;
 
-  const depreciationRate = useMemo(() => {
-    if (numCarAge <= 2) return 0.18;
-    if (numCarAge <= 5) return 0.12;
-    if (numCarAge <= 8) return 0.08;
-    return 0.05;
-  }, [numCarAge]);
+  // 🔥 NEW: ADVANCED DEPRECIATION MODEL
 
-  const mileageFactor = useMemo(() => {
-    if (numCurrentMileage <= 30000) return 1.25;
-    if (numCurrentMileage <= 80000) return 1.0;
-    if (numCurrentMileage <= 120000) return 0.75;
-    return 0.6;
-  }, [numCurrentMileage]);
+  const getAgeDepreciationRate = (age: number) => {
+    if (age <= 3) return 0.18;
+    if (age <= 7) return 0.10;
+    if (age <= 12) return 0.06;
+    return 0.03;
+  };
 
-  const carTypeFactor = useMemo(() => {
-    if (carType === "luxury") return 1.15;
-    if (carType === "performance") return 1.2;
+  const getMileageMultiplier = (mileage: number) => {
+    if (mileage < 30000) return 1.15;
+    if (mileage < 80000) return 1.0;
+    if (mileage < 120000) return 0.85;
+    return 0.7;
+  };
+
+  const getCarTypeMultiplier = (type: string) => {
+    if (type === "luxury") return 1.2;
+    if (type === "performance") return 1.1;
+    if (type === "economy") return 0.9;
     return 1.0;
-  }, [carType]);
+  };
 
   const usageFactor = useMemo(() => {
     if (numAnnualMiles <= 6000) return 0.9;
@@ -57,40 +60,81 @@ export function useCarCost({
     return 1.5;
   }, [numAnnualMiles]);
 
-  const annualMaintenance =
-    numServicing + numTyres + numRepairsBuffer;
+  // 🔥 YEAR-BY-YEAR SIMULATION (key upgrade)
+  const MIN_VALUE = 1000;
+
+  const simulatedDepreciation = useMemo(() => {
+    let value = numCarValue;
+    let age = numCarAge;
+    let mileage = numCurrentMileage;
+
+    // simulate 1 year forward (keeps your annual output consistent)
+    const rate =
+      getAgeDepreciationRate(age) *
+      getMileageMultiplier(mileage) *
+      getCarTypeMultiplier(carType) *
+      usageFactor;
+
+    const newValue = Math.max(value * (1 - rate), MIN_VALUE);
+
+    return value - newValue; // depreciation amount for the year
+  }, [
+    numCarValue,
+    numCarAge,
+    numCurrentMileage,
+    numAnnualMiles,
+    carType,
+    usageFactor,
+  ]);
+
+  // ✅ KEEP YOUR ORIGINAL STRUCTURE
+const annualMaintenance = useMemo(() => {
+  return numServicing + numTyres + numRepairsBuffer;
+}, [numServicing, numTyres, numRepairsBuffer]);
 
   const litresPerGallon = 4.54609;
 
-  let annualFuelCost = 0;
+const annualFuelCost = useMemo(() => {
+  const litresPerGallon = 4.54609;
 
   if (fuelType === "electric") {
     const milesPerKwh = Math.max(numEfficiency, 0.1);
     const annualKwhUsed = numAnnualMiles / milesPerKwh;
-    annualFuelCost = annualKwhUsed * (numFuelPrice / 100);
+    return annualKwhUsed * (numFuelPrice / 100);
   } else {
     const mpg = Math.max(numEfficiency, 1);
     const gallonsUsed = numAnnualMiles / mpg;
     const litresUsed = gallonsUsed * litresPerGallon;
-    annualFuelCost = litresUsed * (numFuelPrice / 100);
+    return litresUsed * (numFuelPrice / 100);
   }
+}, [fuelType, numEfficiency, numAnnualMiles, numFuelPrice]);
 
-  const annualDepreciation =
-    numCarValue *
-    depreciationRate *
-    mileageFactor *
-    carTypeFactor *
-    usageFactor;
+  // 🔥 REPLACED WITH NEW MODEL
+  const annualDepreciation = simulatedDepreciation;
 
-  const annualTotal =
+const annualTotal = useMemo(() => {
+  return (
     annualFuelCost +
     numInsurance +
     numTax +
     annualMaintenance +
-    annualDepreciation;
+    annualDepreciation
+  );
+}, [
+  annualFuelCost,
+  numInsurance,
+  numTax,
+  annualMaintenance,
+  annualDepreciation,
+]);
 
-  const monthlyTotal = annualTotal / 12;
-  const costPerMile = annualTotal / Math.max(numAnnualMiles, 1);
+const monthlyTotal = useMemo(() => {
+  return annualTotal / 12;
+}, [annualTotal]);
+
+const costPerMile = useMemo(() => {
+  return annualTotal / Math.max(numAnnualMiles, 1);
+}, [annualTotal, numAnnualMiles]);
 
   return {
     annualFuelCost,
