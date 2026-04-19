@@ -33,6 +33,21 @@ export default function RootLayout({
           `}
         </Script>
 
+<Script
+  src="https://www.googletagmanager.com/gtag/js?id=G-0ZDCRFPDN5"
+  strategy="afterInteractive"
+/>
+
+<Script id="google-analytics" strategy="afterInteractive">
+  {`
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    window.gtag = gtag;
+    gtag('js', new Date());
+    gtag('config', 'G-0ZDCRFPDN5');
+  `}
+</Script>
+
         <Analytics />
       </body>
     </html>
