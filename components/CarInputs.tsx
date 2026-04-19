@@ -37,7 +37,7 @@ function update(key: string, value: any) {
   const currentYear = new Date().getFullYear();
 
   return (
-    <div className="grid gap-5 md:grid-cols-2">
+    <div className="grid gap-5 md:grid-cols-2"> 
 
       {/* VALUE */}
       <div>
