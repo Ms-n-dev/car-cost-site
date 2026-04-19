@@ -1,5 +1,10 @@
 "use client";
-
+declare global {
+  interface Window {
+    gtag?: (...args: any[]) => void;
+    __started?: boolean;
+  }
+}
 export default function CarInputs({
   data,
   setData,
@@ -7,6 +12,8 @@ export default function CarInputs({
   labelClass,
   handleFuelTypeChange,
 }: any) {
+
+
 
   const numericFields = [
   "carValue",
@@ -22,13 +29,16 @@ export default function CarInputs({
 ];
 
 function update(key: string, value: any) {
+
+  // 🔥 Track first interaction
+  if (!(window as any).__started) {
+    (window as any).__started = true;
+    window.gtag?.('event', 'started_input');
+  }
+
   setData((prev: any) => ({
     ...prev,
-    [key]: numericFields.includes(key)
-      ? value === ""
-        ? ""
-        : Number(value)
-      : value,
+    [key]: value === "" ? "" : value,
   }));
 }
 

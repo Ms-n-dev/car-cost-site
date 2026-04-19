@@ -1,9 +1,15 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Navbar from "@/components/Navbar";
 import CarInputs from "@/components/CarInputs";
 import { motion } from "framer-motion";
+
+declare global {
+  interface Window {
+    gtag?: (...args: any[]) => void;
+  }
+}
 
 function currency(value: number) {
   return new Intl.NumberFormat("en-GB", {
@@ -192,6 +198,10 @@ return {
   totalTax: tax * years,
 };
 }, [car, depreciationRate, mileageFactor, carTypeFactor, usageFactor, annualMaintenance, ownershipYears]);
+
+useEffect(() => {
+  window.gtag?.("event", "viewed_result");
+}, [results]);
 
 const mileageWarning = useMemo(() => {
   const currentMileage = Number(car.currentMileage) || 0;
