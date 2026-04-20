@@ -38,7 +38,11 @@ function update(key: string, value: any) {
 
   setData((prev: any) => ({
     ...prev,
-    [key]: value === "" ? "" : value,
+    [key]: numericFields.includes(key)
+      ? value === "" 
+        ? "" 
+        : Number(value)
+      : value,
   }));
 }
 
