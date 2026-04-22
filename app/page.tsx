@@ -52,6 +52,7 @@ export default function Page() {
     servicing: 350,
     tyres: 300,
     repairsBuffer: 400,
+    miscCosts: 0,
 
   // 🔥 ADD THESE (for dropdowns to work)
   carTypeOpen: false,
@@ -128,6 +129,8 @@ const repairsBuffer = +car.repairsBuffer || 0;
     const years = Number(ownershipYears) || 1;
     const litresPerGallon = 4.54609;
 
+const miscCosts = numberOrZero(car.miscCosts) * years;
+
 let annualFuelCost = 0;
 
 if (car.fuelType === "electric") {
@@ -182,7 +185,8 @@ const totalCost =
   (numberOrZero(car.insurance) * years) +
   (numberOrZero(car.tax) * years) +
   totalMaintenance +
-  totalDepreciation;
+  totalDepreciation +
+  miscCosts;
 
 const monthlyCost = totalCost / (years * 12);
 const costPerMile =
@@ -253,15 +257,21 @@ return (
         <Navbar />
       </div>
 
-      <div className="mb-8">
-        <h1 className="mb-3 text-4xl font-extrabold tracking-tight text-slate-900 md:text-5xl">
-          Total Cost of Ownership Calculator
-        </h1>
+<div className="mb-8 max-w-4xl">
 
-        <p className="max-w-3xl text-base leading-7 text-slate-700">
-          Compare the real cost of ownership side-by-side including fuel, insurance, tax, maintenance, and depreciation.
-        </p>
-      </div>
+  <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-slate-900 leading-tight">
+    What will your next car cost you?
+  </h1>
+
+  <p className="mt-3 text-base text-slate-700 max-w-2xl">
+    Estimate the true cost of ownership over time — including depreciation, fuel, insurance and maintenance.
+  </p>
+
+  <p className="mt-2 text-sm text-slate-400">
+    Built using UK cost assumptions and real-world averages
+  </p>
+
+</div>
 
       <div className="grid gap-6 lg:grid-cols-[1.1fr_1fr]">
 
@@ -380,6 +390,13 @@ return (
                 <span>Depreciation</span>
                 <span>{currency(results.totalDepreciation)}</span>
               </div>
+
+              {numberOrZero(car.miscCosts) > 0 && (
+  <div className="flex justify-between">
+    <span>Additional costs</span>
+    <span>{currency(numberOrZero(car.miscCosts) * ownershipYears)}</span>
+  </div>
+)}
 
               <div className="border-t border-slate-300 pt-4 mt-4">
   <div className="flex items-center justify-between text-base font-bold text-slate-900">

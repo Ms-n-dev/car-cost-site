@@ -1,4 +1,6 @@
 "use client";
+import React, { useState } from "react";
+
 declare global {
   interface Window {
     gtag?: (...args: any[]) => void;
@@ -13,7 +15,7 @@ export default function CarInputs({
   handleFuelTypeChange,
 }: any) {
 
-
+const [showExtras, setShowExtras] = useState(false);
 
   const numericFields = [
   "carValue",
@@ -283,6 +285,61 @@ function update(key: string, value: any) {
           onWheel={(e) => e.currentTarget.blur()}
         />
       </div>
+
+<div className="mt-4">
+
+<button
+  onClick={() => setShowExtras(!showExtras)}
+  className="flex items-center gap-2 text-sm text-slate-600 hover:text-slate-900 transition"
+>
+  <span>
+    {showExtras ? "Hide additional costs" : "Add additional costs"}
+  </span>
+
+  <svg
+    className={`w-4 h-4 transition-transform duration-200 ${
+      showExtras ? "rotate-180" : ""
+    }`}
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M19 9l-7 7-7-7"
+    />
+  </svg>
+</button>
+
+  {showExtras && (
+    <div className="mt-3">
+      <label className={labelClass}>
+        Additional costs (£/year)
+      </label>
+
+      <input
+        type="number"
+        className={inputClass}
+        value={data.miscCosts || ""}
+        onChange={(e) =>
+          setData((prev: any) => ({
+            ...prev,
+            miscCosts: e.target.value === "" ? "" : +e.target.value,
+          }))
+        }
+      />
+
+      <div className="mt-1 text-xs text-slate-400">
+        Breakdown cover, warranty, parking, ULEZ, etc.
+      </div>
+    </div>
+  )}
+
+</div>
+
+      
 
     </div>
   );
