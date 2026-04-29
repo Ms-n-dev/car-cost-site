@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import Navbar from "@/components/Navbar";
 import CarInputs from "@/components/CarInputs";
 import { motion } from "framer-motion";
@@ -36,7 +36,8 @@ export default function Page() {
   const currentYear = new Date().getFullYear();
 
       const [ownershipYears, setOwnershipYears] = useState(3);
-
+const resultsRef = useRef<HTMLElement | null>(null);
+const hasViewedResults = useRef(false);
   const [car, setCar] = useState({
 
     carValue: 18000,
@@ -204,8 +205,36 @@ return {
 }, [car, depreciationRate, mileageFactor, carTypeFactor, usageFactor, annualMaintenance, ownershipYears]);
 
 useEffect(() => {
-  window.gtag?.("event", "viewed_result");
+  window.gtag?.("event", "recalculated_result");
 }, [results]);
+useEffect(() => {
+  if (!resultsRef.current) return;
+
+  const observer = new IntersectionObserver(
+    ([entry]) => {
+      if (entry.isIntersecting && !hasViewedResults.current) {
+        hasViewedResults.current = true;
+
+        window.gtag?.("event", "viewed_result", {
+          ownership_years: ownershipYears,
+          total_cost: Math.round(results.totalCost),
+          monthly_cost: Math.round(results.monthlyCost),
+          fuel_type: car.fuelType,
+          car_type: car.carType,
+        });
+
+        observer.disconnect();
+      }
+    },
+    {
+      threshold: 0.5,
+    }
+  );
+
+  observer.observe(resultsRef.current);
+
+  return () => observer.disconnect();
+}, [ownershipYears, results.totalCost, results.monthlyCost, car.fuelType, car.carType]);
 
 function trackCtaClick(eventName: string) {
   window.gtag?.("event", eventName, {
@@ -302,7 +331,7 @@ return (
         <div className="space-y-6">
 
           {/* RESULTS */}
-<section className={cardClass}>
+<section ref={resultsRef} className={cardClass}>
 
   <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
     <h2 className={sectionTitleClass}>Results</h2>
