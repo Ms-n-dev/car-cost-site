@@ -207,6 +207,16 @@ useEffect(() => {
   window.gtag?.("event", "viewed_result");
 }, [results]);
 
+function trackCtaClick(eventName: string) {
+  window.gtag?.("event", eventName, {
+    ownership_years: ownershipYears,
+    total_cost: Math.round(results.totalCost),
+    monthly_cost: Math.round(results.monthlyCost),
+    fuel_type: car.fuelType,
+    car_type: car.carType,
+  });
+}
+
 const mileageWarning = useMemo(() => {
   const currentMileage = Number(car.currentMileage) || 0;
   const annualMiles = Number(car.annualMiles) || 0;
@@ -408,7 +418,42 @@ return (
 
             </div>
           </section>
+{/* NEXT STEP CTA */}
+<section className={cardClass}>
+  <div className="mb-5">
+    <h2 className={sectionTitleClass}>What next?</h2>
+    <p className="mt-2 text-sm text-slate-600">
+      Get real quotes, save your breakdown, or compare similar cars.
+    </p>
+  </div>
 
+  <div className="grid gap-3 sm:grid-cols-3">
+    <button
+      onClick={() => trackCtaClick("clicked_finance_cta")}
+      className="rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 active:scale-95"
+    >
+      Get finance quotes
+    </button>
+
+    <button
+      onClick={() => trackCtaClick("clicked_email_cta")}
+      className="rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-900 shadow-sm transition hover:bg-slate-50 active:scale-95"
+    >
+      Email me this breakdown
+    </button>
+
+    <button
+      onClick={() => trackCtaClick("clicked_similar_cta")}
+      className="rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-900 shadow-sm transition hover:bg-slate-50 active:scale-95"
+    >
+      Find similar cars
+    </button>
+  </div>
+
+  <p className="mt-4 text-xs text-slate-400">
+    We’re testing which next step people care about most.
+  </p>
+</section>
           {/* ASSUMPTIONS */}
           <section className={cardClass}>
   <div className="mb-5">
@@ -440,6 +485,15 @@ return (
       All values are estimates and do not account for unexpected repairs,
       market changes, or resale timing.
     </p>
+    <div className="pt-3 text-xs text-slate-500">
+  For feedback or enquiries, please contact{" "}
+  <a
+    href="mailto:admincarcalc@gmail.com"
+    className="font-medium text-slate-700 underline underline-offset-2 hover:text-slate-900"
+  >
+    admincarcalc@gmail.com
+  </a>
+</div>
   </div>
 </section>
 
