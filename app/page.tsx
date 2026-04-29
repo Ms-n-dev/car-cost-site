@@ -474,24 +474,24 @@ return (
   <div className="mb-5">
     <h2 className={sectionTitleClass}>What next?</h2>
     <p className="mt-2 text-sm text-slate-600">
-      Get real quotes, save your breakdown, or compare similar cars.
+      Try a different car or explore your options.
     </p>
   </div>
 
-  <div className="grid gap-3 sm:grid-cols-3">
-    <button
-      onClick={() => trackCtaClick("clicked_finance_cta")}
-      className="rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 active:scale-95"
-    >
-      Get finance quotes
-    </button>
+  {/* 🔥 PRIMARY CTA */}
+  <button
+    onClick={() => {
+      trackCtaClick("clicked_compare_cta");
+      localStorage.setItem("car1", JSON.stringify(car));
+      window.location.href = "/compare";
+    }}
+    className="w-full rounded-2xl bg-slate-900 px-4 py-4 text-base font-semibold text-white shadow-sm transition hover:bg-slate-800 active:scale-95"
+  >
+    Compare another car
+  </button>
 
-    <button
-      onClick={() => trackCtaClick("clicked_email_cta")}
-      className="rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-900 shadow-sm transition hover:bg-slate-50 active:scale-95"
-    >
-      Email me this breakdown
-    </button>
+  {/* 🔹 SECONDARY CTAs */}
+  <div className="mt-4 grid gap-3 sm:grid-cols-3">
 
 <button
   onClick={() => {
@@ -503,6 +503,21 @@ return (
 >
   Find similar cars
 </button>
+
+    <button
+      onClick={() => trackCtaClick("clicked_email_cta")}
+      className="rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-900 shadow-sm transition hover:bg-slate-50 active:scale-95"
+    >
+      Email me this breakdown
+    </button>
+
+    <button
+      onClick={() => trackCtaClick("clicked_finance_cta")}
+      className="rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-900 shadow-sm transition hover:bg-slate-50 active:scale-95"
+    >
+      Get finance quotes
+    </button>
+
   </div>
 
   <p className="mt-4 text-xs text-slate-400">

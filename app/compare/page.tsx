@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { useCarCost } from "../../hooks/useCarCost";
 import Navbar from "../../components/Navbar";
 import CarInputs from "../../components/CarInputs";
@@ -50,7 +50,22 @@ carYearOpen: false,
   const [car2, setCar2] = useState({
     ...car1,
   });
+useEffect(() => {
+  const savedCar = localStorage.getItem("car1");
 
+  if (savedCar) {
+    const parsed = JSON.parse(savedCar);
+
+    setCar1(parsed);
+
+    // 👇 This is important
+    // Prefill car2 with SAME base but slightly tweaked
+    setCar2({
+      ...parsed,
+      carValue: parsed.carValue * 1.1, // +10% price so user sees a difference
+    });
+  }
+}, []);
   // DERIVED AGE
   const car1Age = useMemo(() => currentYear - car1.carYear, [car1.carYear, currentYear]);
   const car2Age = useMemo(() => currentYear - car2.carYear, [car2.carYear, currentYear]);
@@ -78,6 +93,8 @@ carYearOpen: false,
 
   const results1 = useCarCost({ ...car1, carAge: car1Age });
   const results2 = useCarCost({ ...car2, carAge: car2Age });
+  const costDifference = results2.annualTotal - results1.annualTotal;
+const isCar2Cheaper = costDifference < 0;
 
   const cardClass =
     "rounded-3xl border border-slate-300 bg-white p-6 shadow-md shadow-slate-200/70";
@@ -148,38 +165,143 @@ carYearOpen: false,
           <h2 className="text-2xl font-bold text-slate-900 mb-4">
             Summary
           </h2>
+          <div className="mb-4 text-sm text-slate-700">
+  {costDifference === 0 ? (
+    "Both cars cost roughly the same per year."
+  ) : costDifference > 0 ? (
+    <>Car 2 costs <span className="font-semibold">{currency(Math.abs(costDifference))}</span> more per year than Car 1.</>
+  ) : (
+    <>Car 2 is <span className="font-semibold">{currency(Math.abs(costDifference))}</span> cheaper per year than Car 1.</>
+  )}
+</div>
 
           <div className="overflow-x-auto">
             <table className="w-full text-sm text-slate-700">
               <thead>
                 <tr className="border-b border-slate-300 text-left">
                   <th className="py-2">Metric</th>
-                  <th>Car 1</th>
-                  <th>Car 2</th>
+<th>Car 1</th>
+<th>Car 2</th>
                 </tr>
               </thead>
 
               <tbody>
 
-                <tr className="border-b border-slate-200">
-                  <td className="py-3 font-medium">Annual Cost</td>
-                  <td>{currency(results1.annualTotal)}</td>
-                  <td>{currency(results2.annualTotal)}</td>
-                </tr>
+  {/* Annual Cost */}
+  <tr className="border-b border-slate-200">
+    <td className="py-3 font-medium">Annual Cost</td>
 
-                <tr className="border-b border-slate-200">
-                  <td className="py-3 font-medium">Monthly Cost</td>
-                  <td>{currency(results1.monthlyTotal)}</td>
-                  <td>{currency(results2.monthlyTotal)}</td>
-                </tr>
+    {(() => {
+      const diff = results2.annualTotal - results1.annualTotal;
+      const equal = Math.abs(diff) < 50;
 
-                <tr>
-                  <td className="py-3 font-medium">Cost per mile</td>
-                  <td>{currency2(results1.costPerMile)}</td>
-                  <td>{currency2(results2.costPerMile)}</td>
-                </tr>
+      const car1Class = equal
+        ? ""
+        : diff > 0
+        ? "bg-green-100 text-green-800 px-2 py-1 rounded font-semibold"
+        : "bg-red-100 text-red-800 px-2 py-1 rounded font-semibold";
 
-              </tbody>
+      const car2Class = equal
+        ? ""
+        : diff < 0
+        ? "bg-green-100 text-green-800 px-2 py-1 rounded font-semibold"
+        : "bg-red-100 text-red-800 px-2 py-1 rounded font-semibold";
+
+      return (
+        <>
+          <td>
+            <span className={car1Class}>
+              {currency(results1.annualTotal)}
+            </span>
+          </td>
+
+          <td>
+            <span className={car2Class}>
+              {currency(results2.annualTotal)}
+            </span>
+          </td>
+        </>
+      );
+    })()}
+  </tr>
+
+  {/* Monthly Cost */}
+  <tr className="border-b border-slate-200">
+    <td className="py-3 font-medium">Monthly Cost</td>
+
+    {(() => {
+      const diff = results2.monthlyTotal - results1.monthlyTotal;
+      const equal = Math.abs(diff) < 5;
+
+      const car1Class = equal
+        ? ""
+        : diff > 0
+        ? "bg-green-100 text-green-800 px-2 py-1 rounded font-semibold"
+        : "bg-red-100 text-red-800 px-2 py-1 rounded font-semibold";
+
+      const car2Class = equal
+        ? ""
+        : diff < 0
+        ? "bg-green-100 text-green-800 px-2 py-1 rounded font-semibold"
+        : "bg-red-100 text-red-800 px-2 py-1 rounded font-semibold";
+
+      return (
+        <>
+          <td>
+            <span className={car1Class}>
+              {currency(results1.monthlyTotal)}
+            </span>
+          </td>
+
+          <td>
+            <span className={car2Class}>
+              {currency(results2.monthlyTotal)}
+            </span>
+          </td>
+        </>
+      );
+    })()}
+  </tr>
+
+  {/* Cost per mile */}
+  <tr>
+    <td className="py-3 font-medium">Cost per mile</td>
+
+    {(() => {
+      const diff = results2.costPerMile - results1.costPerMile;
+      const equal = Math.abs(diff) < 0.01;
+
+      const car1Class = equal
+        ? ""
+        : diff > 0
+        ? "bg-green-100 text-green-800 px-2 py-1 rounded font-semibold"
+        : "bg-red-100 text-red-800 px-2 py-1 rounded font-semibold";
+
+      const car2Class = equal
+        ? ""
+        : diff < 0
+        ? "bg-green-100 text-green-800 px-2 py-1 rounded font-semibold"
+        : "bg-red-100 text-red-800 px-2 py-1 rounded font-semibold";
+
+      return (
+        <>
+          <td>
+            <span className={car1Class}>
+              {currency2(results1.costPerMile)}
+            </span>
+          </td>
+
+          <td>
+            <span className={car2Class}>
+              {currency2(results2.costPerMile)}
+            </span>
+          </td>
+        </>
+      );
+    })()}
+  </tr>
+
+</tbody>
             </table>
           </div>
         </section>
