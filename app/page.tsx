@@ -34,7 +34,14 @@ function numberOrZero(value: number) {
 
 export default function Page() {
   const currentYear = new Date().getFullYear();
+const [similarModalOpen, setSimilarModalOpen] = useState(false);
+const [similarSubmitted, setSimilarSubmitted] = useState(false);
 
+const [similarForm, setSimilarForm] = useState({
+  postcode: "",
+  budget: "",
+  radius: "25",
+});
       const [ownershipYears, setOwnershipYears] = useState(3);
 const resultsRef = useRef<HTMLElement | null>(null);
 const hasViewedResults = useRef(false);
@@ -245,7 +252,22 @@ function trackCtaClick(eventName: string) {
     car_type: car.carType,
   });
 }
+function submitSimilarCars(e: React.FormEvent) {
+  e.preventDefault();
 
+  window.gtag?.("event", "submitted_similar_cta", {
+    postcode: similarForm.postcode,
+    budget: similarForm.budget,
+    radius: similarForm.radius,
+    ownership_years: ownershipYears,
+    total_cost: Math.round(results.totalCost),
+    monthly_cost: Math.round(results.monthlyCost),
+    fuel_type: car.fuelType,
+    car_type: car.carType,
+  });
+
+  setSimilarSubmitted(true);
+}
 const mileageWarning = useMemo(() => {
   const currentMileage = Number(car.currentMileage) || 0;
   const annualMiles = Number(car.annualMiles) || 0;
@@ -471,12 +493,16 @@ return (
       Email me this breakdown
     </button>
 
-    <button
-      onClick={() => trackCtaClick("clicked_similar_cta")}
-      className="rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-900 shadow-sm transition hover:bg-slate-50 active:scale-95"
-    >
-      Find similar cars
-    </button>
+<button
+  onClick={() => {
+    trackCtaClick("clicked_similar_cta");
+    setSimilarModalOpen(true);
+    setSimilarSubmitted(false);
+  }}
+  className="rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-900 shadow-sm transition hover:bg-slate-50 active:scale-95"
+>
+  Find similar cars
+</button>
   </div>
 
   <p className="mt-4 text-xs text-slate-400">
@@ -531,6 +557,110 @@ return (
       </div>
 
     </div>
+    {similarModalOpen && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 px-4">
+    <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-xl">
+      <div className="mb-4 flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-bold text-slate-900">
+            Find similar cars
+          </h2>
+          <p className="mt-2 text-sm text-slate-600">
+            Tell us what you’re looking for and we’ll use this to build better car search next.
+          </p>
+        </div>
+
+        <button
+          onClick={() => setSimilarModalOpen(false)}
+          className="rounded-full px-3 py-1 text-xl text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+        >
+          ×
+        </button>
+      </div>
+
+      {!similarSubmitted ? (
+        <form onSubmit={submitSimilarCars} className="space-y-4">
+          <div>
+            <label className={labelClass}>Postcode</label>
+            <input
+              type="text"
+              required
+              value={similarForm.postcode}
+              onChange={(e) =>
+                setSimilarForm((prev) => ({
+                  ...prev,
+                  postcode: e.target.value,
+                }))
+              }
+              className={inputClass}
+              placeholder="e.g. HD1"
+            />
+          </div>
+
+          <div>
+            <label className={labelClass}>Budget (£)</label>
+            <input
+              type="number"
+              required
+              value={similarForm.budget}
+              onChange={(e) =>
+                setSimilarForm((prev) => ({
+                  ...prev,
+                  budget: e.target.value,
+                }))
+              }
+              className={inputClass}
+              placeholder="e.g. 20000"
+            />
+          </div>
+
+          <div>
+            <label className={labelClass}>Search radius</label>
+            <select
+              value={similarForm.radius}
+              onChange={(e) =>
+                setSimilarForm((prev) => ({
+                  ...prev,
+                  radius: e.target.value,
+                }))
+              }
+              className={inputClass}
+            >
+              <option value="10">10 miles</option>
+              <option value="25">25 miles</option>
+              <option value="50">50 miles</option>
+              <option value="100">100 miles</option>
+              <option value="national">Nationwide</option>
+            </select>
+          </div>
+
+          <button
+            type="submit"
+            className="w-full rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 active:scale-95"
+          >
+            Show me similar cars
+          </button>
+        </form>
+      ) : (
+        <div className="rounded-2xl bg-slate-100 p-5">
+          <h3 className="text-lg font-bold text-slate-900">
+            Nice — we’ve logged your interest.
+          </h3>
+          <p className="mt-2 text-sm text-slate-600">
+            Similar car search is one of the next features we’re testing.
+          </p>
+
+          <button
+            onClick={() => setSimilarModalOpen(false)}
+            className="mt-4 w-full rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 active:scale-95"
+          >
+            Close
+          </button>
+        </div>
+      )}
+    </div>
+  </div>
+)}
   </main>
 );
 }
