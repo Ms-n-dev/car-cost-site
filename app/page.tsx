@@ -78,6 +78,11 @@ const hasViewedResults = useRef(false);
     premium_petrol: 171.0,
     electric: 7.5,
   } as const;
+  const [emailModalOpen, setEmailModalOpen] = useState(false);
+const [breakdownEmail, setBreakdownEmail] = useState("");
+const [emailSending, setEmailSending] = useState(false);
+const [emailSent, setEmailSent] = useState(false);
+const [emailError, setEmailError] = useState("");
 
   function handleFuelTypeChange(value: string) {
     setCar((prev) => ({
@@ -309,7 +314,47 @@ const mileageWarning = useMemo(() => {
   const metricCardClass = "rounded-2xl bg-slate-200 p-4";
   const sectionTitleClass = "text-2xl font-bold text-slate-900";
   const mutedTextClass = "text-slate-600";
+async function sendBreakdownEmail() {
+  setEmailSending(true);
+  setEmailError("");
+  setEmailSent(false);
 
+  try {
+    const res = await fetch("/api/email-breakdown", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email: breakdownEmail,
+        ownershipYears,
+        totalCost: results.totalCost,
+        monthlyCost: results.monthlyCost,
+        costPerMile: results.costPerMile,
+        totalFuelCost: results.totalFuelCost,
+        totalInsurance: results.totalInsurance,
+        totalTax: results.totalTax,
+        totalDepreciation: results.totalDepreciation,
+        annualMiles: car.annualMiles,
+        carValue: car.carValue,
+        carYear: car.carYear,
+        fuelType: car.fuelType,
+        carType: car.carType,
+      }),
+    });
+
+    console.log("email response", res.status);
+
+    if (!res.ok) throw new Error("Failed");
+
+    setEmailSent(true);
+  } catch (err) {
+    console.error("EMAIL SEND FAILED:", err);
+    setEmailError("Could not send email. Please try again.");
+  } finally {
+    setEmailSending(false);
+  }
+}
 return (
   <main className="min-h-screen bg-slate-100 text-slate-900">
     <div className="mx-auto max-w-7xl px-6 py-8 md:px-10 md:py-10">
@@ -505,7 +550,7 @@ return (
 </button>
 
     <button
-      onClick={() => trackCtaClick("clicked_email_cta")}
+      onClick={() => setEmailModalOpen(true)}
       className="rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-900 shadow-sm transition hover:bg-slate-50 active:scale-95"
     >
       Email me this breakdown
@@ -676,6 +721,56 @@ return (
     </div>
   </div>
 )}
+
+{emailModalOpen && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+    <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-xl">
+      <h3 className="text-lg font-semibold text-slate-900">
+        Email me this breakdown
+      </h3>
+
+      <p className="mt-2 text-sm text-slate-600">
+        Get your ownership cost estimate sent to your inbox.
+      </p>
+
+      <input
+        type="email"
+        value={breakdownEmail}
+        onChange={(e) => setBreakdownEmail(e.target.value)}
+        placeholder="you@example.com"
+        className="mt-4 w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-slate-900"
+      />
+
+      {emailError && (
+        <p className="mt-3 text-sm text-red-600">{emailError}</p>
+      )}
+
+      {emailSent && (
+        <p className="mt-3 text-sm text-green-600">
+          Sent — check your inbox.
+        </p>
+      )}
+
+      <div className="mt-5 flex gap-3">
+        <button
+          onClick={() => setEmailModalOpen(false)}
+          className="flex-1 rounded-2xl border border-slate-300 px-4 py-3 text-sm font-medium text-slate-700"
+        >
+          Cancel
+        </button>
+
+<button
+  onClick={sendBreakdownEmail}
+  disabled={emailSending || !breakdownEmail}
+  className="flex-1 rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white disabled:opacity-50"
+>
+  {emailSending ? "Sending..." : "Send"}
+</button>
+      </div>
+    </div>
+  </div>
+)}
+
   </main>
 );
 }
