@@ -23,15 +23,20 @@ export default function RootLayout({
       <body className={`${inter.className} min-h-full flex flex-col`}>
         {children}
 
-        <Script id="clarity" strategy="afterInteractive">
-          {`
-            (function(c,l,a,r,i,t,y){
-                c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-                t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
-                y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-            })(window, document, "clarity", "script", "webk7iqmo5");
-          `}
-        </Script>
+<Script id="clarity" strategy="beforeInteractive">
+  {`
+    (function(c,l,a,r,i,t,y){
+      if (typeof c[a] !== "function") {
+        c[a] = function(){(c[a].q = c[a].q || []).push(arguments)};
+      }
+      t = l.createElement(r);
+      t.async = 1;
+      t.src = "https://www.clarity.ms/tag/" + i;
+      y = l.getElementsByTagName(r)[0];
+      y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "webk7iqmo5");
+  `}
+</Script>
 
 <Script
   src="https://www.googletagmanager.com/gtag/js?id=G-0ZDCRFPDN5"
@@ -41,10 +46,9 @@ export default function RootLayout({
 <Script id="google-analytics" strategy="afterInteractive">
   {`
     window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    window.gtag = gtag;
-    gtag('js', new Date());
-    gtag('config', 'G-0ZDCRFPDN5');
+    window.gtag = function(){window.dataLayer.push(arguments);};
+    window.gtag('js', new Date());
+    window.gtag('config', 'G-0ZDCRFPDN5');
   `}
 </Script>
 

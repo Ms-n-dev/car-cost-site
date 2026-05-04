@@ -549,12 +549,20 @@ return (
   Find similar cars
 </button>
 
-    <button
-      onClick={() => setEmailModalOpen(true)}
-      className="rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-900 shadow-sm transition hover:bg-slate-50 active:scale-95"
-    >
-      Email me this breakdown
-    </button>
+<button
+  onClick={() => {
+    console.log("EMAIL CTA CLICKED");
+
+    trackCtaClick("clicked_email_cta");
+
+    setTimeout(() => {
+      setEmailModalOpen(true);
+    }, 200);
+  }}
+  className="rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-900 shadow-sm transition hover:bg-slate-50 active:scale-95"
+>
+  Email me this breakdown
+</button>
 
     <button
       onClick={() => trackCtaClick("clicked_finance_cta")}
