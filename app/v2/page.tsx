@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import VehicleStep from "../../components/v2/VehicleStep";
 import PurchaseStep from "@/components/v2/PurchaseStep";
@@ -77,6 +77,9 @@ function n(value: number | "") {
 export default function V2Page() {
   const [step, setStep] = useState(1);
   const [data, setData] = useState<V2FormData>(initialData);
+  useEffect(() => {
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}, [step]);
   const currentYear = new Date().getFullYear();
 
 const carAge =

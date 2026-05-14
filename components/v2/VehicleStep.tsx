@@ -23,6 +23,7 @@ function mapDvlaFuelType(fuelType?: string): V2FormData["fuelType"] {
 export default function VehicleStep({ data, updateData, next }: Props) {
   const [lookupLoading, setLookupLoading] = useState(false);
   const [lookupError, setLookupError] = useState("");
+  const [lookupSuccess, setLookupSuccess] = useState("");
   const hasStartedInput = useRef(false);
 
   const selectedMake = data.makeModel.split(" | ")[0] || "";
@@ -82,6 +83,12 @@ updateData({
   fuelType: mapDvlaFuelType(vehicle.fuelType),
 });
 
+setLookupSuccess(
+  `Found ${matchedMake || vehicle.make || "vehicle"}${
+    year ? `, ${year}` : ""
+  }`
+);
+
 trackEvent("reg_lookup_success", {
   fuel_type: vehicle.fuelType || "",
   make: vehicle.make || "",
@@ -89,6 +96,7 @@ trackEvent("reg_lookup_success", {
 
     } catch (err) {
       console.error("DVLA lookup failed:", err);
+      setLookupSuccess("");
       setLookupError("Could not find that reg. You can still enter the car manually.");
     } finally {
       setLookupLoading(false);
@@ -136,6 +144,11 @@ onChange={(e) => {
           {lookupError && (
             <p className="mt-2 text-sm text-red-600">{lookupError}</p>
           )}
+          {lookupSuccess && (
+  <p className="mt-2 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
+    {lookupSuccess}
+  </p>
+)}
         </div>
 
         <div className="flex items-center gap-3 text-sm text-slate-400">

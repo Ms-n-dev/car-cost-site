@@ -22,7 +22,7 @@ export async function POST(req: Request) {
         body: JSON.stringify({
           registrationNumber: String(registrationNumber)
             .replace(/\s/g, "")
-            .toUpperCase(),
+            .toUpperCase(), 
         }),
       }
     );
