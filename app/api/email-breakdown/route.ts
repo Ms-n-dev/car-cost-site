@@ -29,8 +29,10 @@ export async function POST(req: Request) {
       totalFuelCost,
       totalInsurance,
       totalTax,
-      totalDepreciation,
-      annualMiles,
+totalDepreciation,
+totalMaintenance,
+totalMiscCosts,
+annualMiles,
       carValue,
       carYear,
       fuelType,
@@ -56,10 +58,12 @@ export async function POST(req: Request) {
 
         <div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:12px;padding:16px;">
           <h2 style="margin-top:0;">Breakdown</h2>
-          <p><strong>Fuel:</strong> ${money(totalFuelCost)}</p>
-          <p><strong>Insurance:</strong> ${money(totalInsurance)}</p>
-          <p><strong>Road tax:</strong> ${money(totalTax)}</p>
-          <p><strong>Depreciation:</strong> ${money(totalDepreciation)}</p>
+<p><strong>Fuel:</strong> ${money(totalFuelCost)}</p>
+<p><strong>Insurance:</strong> ${money(totalInsurance)}</p>
+<p><strong>Road tax:</strong> ${money(totalTax)}</p>
+<p><strong>Maintenance:</strong> ${money(totalMaintenance)}</p>
+<p><strong>Depreciation:</strong> ${money(totalDepreciation)}</p>
+<p><strong>Other costs:</strong> ${money(totalMiscCosts)}</p>
         </div>
 
         <hr style="margin:24px 0;border:none;border-top:1px solid #e2e8f0;" />
