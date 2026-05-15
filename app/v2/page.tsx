@@ -175,15 +175,15 @@ const results = {
       CarCalc
     </div>
 
-    <nav className="hidden items-center gap-6 text-sm font-medium text-slate-500 sm:flex">
-      <button className="transition hover:text-slate-950">
-        Compare
-      </button>
+<nav className="flex items-center gap-4 text-sm font-medium text-slate-500">
+  <Link href="/compare" className="transition hover:text-slate-950">
+    Compare
+  </Link>
 
-<Link href="/how-it-works" className="transition hover:text-slate-950">
-  How it works
-</Link>
-    </nav>
+  <Link href="/how-it-works" className="transition hover:text-slate-950">
+    How it works
+  </Link>
+</nav>
   </header>
 
 
