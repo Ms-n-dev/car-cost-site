@@ -145,16 +145,17 @@ export default function PurchaseStep({
             />
 
             <NumberInput
-              label="Ownership years"
-              value={data.ownershipYears}
-              onChange={(value) =>
-                updateData({
-                  ownershipYears: value === "" ? 3 : Number(value),
-                })
-              }
-              suffix="years"
-              placeholder="3"
-            />
+  label="Ownership years"
+  value={data.ownershipYears}
+  onChange={(value) =>
+    updateData({
+      ownershipYears:
+        value === "" ? "" : Math.min(Math.max(Number(value), 1), 5),
+    })
+  }
+  suffix="years"
+  placeholder="3"
+/>
           </div>
         )}
 

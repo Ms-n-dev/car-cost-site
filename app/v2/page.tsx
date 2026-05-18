@@ -22,7 +22,7 @@ export type V2FormData = {
   carYear: number | "";
   currentMileage: number | "";
   annualMiles: number | "";
-  ownershipYears: number;
+ownershipYears: number | "";
 
 fuelType: "" | "petrol" | "diesel" | "premium_petrol" | "electric";
   efficiency: number | "";
@@ -105,7 +105,7 @@ const ownership = useOwnershipCost({
   ownershipYears: data.ownershipYears,
 });
 
-const years = data.ownershipYears;
+const years = Number(data.ownershipYears) || 3;
 const months = years * 12;
 
 
