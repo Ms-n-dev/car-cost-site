@@ -54,7 +54,7 @@ body: JSON.stringify({
 
   costPerMile:
     results.totalCost /
-    Math.max((data.annualMiles || 0) * data.ownershipYears, 1),
+Math.max((Number(data.annualMiles) || 0) * (Number(data.ownershipYears) || 3), 1),
 
   totalFuelCost: results.fuelTotal,
   totalInsurance: results.insuranceTotal,
