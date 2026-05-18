@@ -67,6 +67,23 @@ useEffect(() => {
     monthly_cost: Math.round(results.monthlyCost),
   });
 }, []);
+
+useEffect(() => {
+  const modalOpen = financeModalOpen || emailModalOpen;
+
+  if (!modalOpen) {
+    document.body.style.overflow = "";
+    return;
+  }
+
+  document.body.style.overflow = "hidden";
+
+  return () => {
+    document.body.style.overflow = "";
+  };
+}, [financeModalOpen, emailModalOpen]);
+
+
   return (
     <section className="mx-auto w-full max-w-4xl">
       <div className="rounded-[2.5rem] bg-slate-950 p-6 text-white shadow-2xl shadow-slate-300 sm:p-10">

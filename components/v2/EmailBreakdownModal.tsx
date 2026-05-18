@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { V2FormData } from "@/app/v2/page";
 import { trackEvent } from "@/lib/gtag";
 
@@ -31,18 +31,6 @@ export default function EmailBreakdownModal({
 }: Props) {
   const [email, setEmail] = useState("");
   const [sending, setSending] = useState(false);
-
-useEffect(() => {
-  if (!open) return;
-
-  const originalOverflow = document.body.style.overflow;
-
-  document.body.style.overflow = "hidden";
-
-  return () => {
-    document.body.style.overflow = originalOverflow;
-  };
-}, [open]);
 
   if (!open) return null;
 
