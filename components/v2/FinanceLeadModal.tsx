@@ -150,31 +150,41 @@ onClose();
             className="w-full rounded-2xl border border-slate-200 px-4 py-4 outline-none transition-all duration-200 focus:border-slate-950 focus:ring-4 focus:ring-slate-950/10"
           />
 
-          <div className="grid grid-cols-2 gap-3">
-            <input
-              value={form.monthlyBudget}
-              type="number"
-              onChange={(e) =>
-                setForm((prev) => ({
-                  ...prev,
-                  monthlyBudget: e.target.value,
-                }))
-              }
-              placeholder="Monthly budget"
-              className="w-full rounded-2xl border border-slate-200 px-4 py-4 outline-none transition-all duration-200 focus:border-slate-950 focus:ring-4 focus:ring-slate-950/10"
-            />
+       <div className="grid grid-cols-2 gap-3">
+  <div className="flex items-center rounded-2xl border border-slate-200 px-4 focus-within:border-slate-950 focus-within:ring-4 focus-within:ring-slate-950/10">
+    <span className="text-slate-400">£</span>
 
-            <input
-              value={form.deposit}
-              type="number"
-              onChange={(e) =>
-                setForm((prev) => ({ ...prev, deposit: e.target.value }))
-              }
-              placeholder="Deposit"
-              className="w-full rounded-2xl border border-slate-200 px-4 py-4 outline-none transition-all duration-200 focus:border-slate-950 focus:ring-4 focus:ring-slate-950/10"
-            />
-          </div>
-        </div>
+    <input
+      value={form.monthlyBudget}
+      type="number"
+      onChange={(e) =>
+        setForm((prev) => ({
+          ...prev,
+          monthlyBudget: e.target.value,
+        }))
+      }
+      placeholder="Monthly budget"
+      className="w-full bg-transparent px-2 py-4 outline-none"
+    />
+  </div>
+
+  <div className="flex items-center rounded-2xl border border-slate-200 px-4 focus-within:border-slate-950 focus-within:ring-4 focus:ring-slate-950/10">
+    <span className="text-slate-400">£</span>
+
+    <input
+      value={form.deposit}
+      type="number"
+      onChange={(e) =>
+        setForm((prev) => ({
+          ...prev,
+          deposit: e.target.value,
+        }))
+      }
+      placeholder="Deposit"
+      className="w-full bg-transparent px-2 py-4 outline-none"
+    />
+  </div>
+</div>
 
         <p className="mt-4 text-xs leading-5 text-slate-400">
           By submitting, you agree to be contacted about finance options. This
