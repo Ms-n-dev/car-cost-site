@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { V2FormData } from "@/app/v2/page";
 import { trackEvent } from "@/lib/gtag";
 
@@ -27,6 +27,17 @@ export default function FinanceLeadModal({
     monthlyBudget: "",
     deposit: "",
   });
+
+useEffect(() => {
+  if (!open) return;
+
+  const originalOverflow = document.body.style.overflow;
+  document.body.style.overflow = "hidden";
+
+  return () => {
+    document.body.style.overflow = originalOverflow;
+  };
+}, [open]);
 
   if (!open) return null;
 
@@ -86,8 +97,8 @@ onClose();
   };
 
   return (
-<div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/50 px-4 py-6 backdrop-blur-sm sm:flex sm:items-center sm:justify-center">
-<div className="relative mx-auto max-h-[calc(100vh-3rem)] w-full max-w-lg overflow-y-auto rounded-[2rem] bg-white p-6 shadow-2xl shadow-slate-950/20">
+<div className="fixed inset-0 z-50 flex items-start justify-center overflow-hidden bg-slate-950/50 px-4 py-6 backdrop-blur-sm sm:items-center">
+<div className="relative max-h-[calc(100vh-3rem)] w-full max-w-lg overflow-y-auto rounded-[2rem] bg-white p-6 shadow-2xl shadow-slate-950/20">
         <div className="mb-6 flex items-start justify-between gap-4">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-400">
