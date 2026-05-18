@@ -86,8 +86,8 @@ onClose();
   };
 
   return (
-<div className="fixed inset-0 z-50 flex items-start justify-center overflow-hidden bg-slate-950/50 px-4 py-6 backdrop-blur-sm sm:items-center">
-<div className="relative max-h-[calc(100vh-3rem)] w-full max-w-lg overflow-y-auto rounded-[2rem] bg-white p-6 shadow-2xl shadow-slate-950/20">
+<div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/50 px-4 py-6 backdrop-blur-sm">
+<div className="mx-auto w-full max-w-lg rounded-[2rem] bg-white p-6 shadow-2xl shadow-slate-950/20">
         <div className="mb-6 flex items-start justify-between gap-4">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-400">
