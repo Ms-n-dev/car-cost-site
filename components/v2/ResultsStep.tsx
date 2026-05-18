@@ -74,7 +74,7 @@ useEffect(() => {
           True cost
         </p>
 
-<h1 className="max-w-2xl text-4xl font-semibold tracking-tight sm:text-6xl">
+<h1 className="max-w-2xl text-3xl font-semibold leading-tight tracking-tight sm:text-6xl">
   {carName} will cost around{" "}
   <span className="whitespace-nowrap">
     {money(results.monthlyCost)}/month
@@ -129,14 +129,14 @@ useEffect(() => {
 
 
         <div className="mt-8 grid gap-4 sm:grid-cols-3">
-          <div className="rounded-3xl bg-white/10 p-5 transition-all duration-300 hover:-translate-y-0.5 hover:bg-white/15">
+          <div className="rounded-3xl bg-white/10 p-4 transition-all duration-300 hover:-translate-y-0.5 hover:bg-white/15 sm:p-5">
             <div className="text-sm text-slate-400">Total cost</div>
             <div className="mt-2 text-3xl font-semibold">
               {money(results.totalCost)}
             </div>
           </div>
 
-<div className="rounded-3xl bg-white/10 p-5 transition-all duration-300 hover:-translate-y-0.5 hover:bg-white/15">
+<div className="rounded-3xl bg-white/10 p-4 transition-all duration-300 hover:-translate-y-0.5 hover:bg-white/15 sm:p-5">
   <div className="text-sm text-slate-400">Monthly cost</div>
 
   <div className="mt-2 text-3xl font-semibold">
@@ -144,7 +144,7 @@ useEffect(() => {
   </div>
 </div>
 
-          <div className="rounded-3xl bg-white/10 p-5 transition-all duration-300 hover:-translate-y-0.5 hover:bg-white/15">
+          <div className="rounded-3xl bg-white/10 p-4 transition-all duration-300 hover:-translate-y-0.5 hover:bg-white/15 sm:p-5">
             <div className="text-sm text-slate-400">Buying method</div>
             <div className="mt-2 text-3xl font-semibold capitalize">
               {data.purchaseType}

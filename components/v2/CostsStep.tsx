@@ -40,7 +40,7 @@ function NumberInput({
             onChange(e.target.value === "" ? "" : Number(e.target.value))
           }
           placeholder={placeholder}
-          className="w-full bg-transparent px-2 py-4 outline-none transition-all duration-200"
+          className="w-full bg-transparent px-2 py-3 outline-none transition-all duration-200 sm:py-4"
         />
 
         {suffix && <span className="text-slate-400">{suffix}</span>}

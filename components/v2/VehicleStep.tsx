@@ -129,7 +129,7 @@ onChange={(e) => {
 }}
   onBlur={lookupReg}
   placeholder="AB12 CDE"
-  className="w-full rounded-2xl border border-slate-200 bg-yellow-300 px-5 py-5 text-center text-3xl font-black uppercase tracking-widest text-slate-950 outline-none transition-all duration-200 focus:scale-[1.01]"
+  className="w-full rounded-2xl border border-slate-200 bg-yellow-300 px-5 py-4 text-center text-3xl font-black uppercase tracking-widest text-slate-950 outline-none transition-all duration-200 focus:scale-[1.01] sm:py-5"
 />
 
           <button
@@ -145,9 +145,12 @@ onChange={(e) => {
             <p className="mt-2 text-sm text-red-600">{lookupError}</p>
           )}
           {lookupSuccess && (
-  <p className="mt-2 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
-    {lookupSuccess}
-  </p>
+  <div className="mt-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">
+    <div className="flex items-center gap-2">
+      <span>✓</span>
+      <span>{lookupSuccess}</span>
+    </div>
+  </div>
 )}
         </div>
 

@@ -161,7 +161,7 @@ const results = {
   const back = () => setStep((prev) => Math.max(prev - 1, 1));
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#f8fafc] px-4 py-6 text-slate-950">
+    <main className="relative min-h-screen overflow-hidden bg-[#f8fafc] px-4 py-4 text-slate-950 sm:py-6">
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
   <div className="absolute left-1/2 top-[-200px] h-[500px] w-[500px] -translate-x-1/2 rounded-full bg-slate-200/50 blur-3xl" />
 
@@ -175,7 +175,7 @@ const results = {
       CarCalc
     </div>
 
-<nav className="flex items-center gap-4 text-sm font-medium text-slate-500">
+<nav className="flex items-center gap-3 text-xs font-medium text-slate-500 sm:gap-4 sm:text-sm">
   <Link href="/compare" className="transition hover:text-slate-950">
     Compare
   </Link>
@@ -189,7 +189,7 @@ const results = {
 
         <ProgressBar step={step} />
 
-        <div className="flex flex-1 items-center justify-center py-12">
+        <div className="flex flex-1 items-center justify-center py-6 sm:py-12">
           <AnimatePresence mode="wait">
             <motion.div
               key={step}
