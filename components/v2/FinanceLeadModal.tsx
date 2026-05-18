@@ -88,7 +88,7 @@ onClose();
   return (
 <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/50 px-4 py-6 backdrop-blur-sm">
 <div className="mx-auto w-full max-w-lg rounded-[2rem] bg-white p-6 shadow-2xl shadow-slate-950/20">
-        <div className="mb-6 flex items-start justify-between gap-4">
+        <div className="sticky top-0 z-10 -mx-6 -mt-6 mb-6 flex items-start justify-between gap-4 rounded-t-[2rem] bg-white px-6 pt-6 pb-2">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-400">
               Finance quotes
