@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useMemo, useState, useEffect } from "react";
-import { useCarCost } from "../../hooks/useCarCost";
+import { useOwnershipCost } from "@/hooks/useOwnershipCost";
 import Navbar from "../../components/Navbar";
 import CarInputs from "../../components/CarInputs";
 
@@ -25,6 +25,7 @@ function currency2(value: number) {
 export default function ComparePage() {
 
   const currentYear = new Date().getFullYear();
+const [ownershipYears, setOwnershipYears] = useState(3);
 
   // CAR 1
   const [car1, setCar1] = useState({
@@ -91,28 +92,39 @@ useEffect(() => {
     };
   }
 
-  const results1 = useCarCost({ ...car1, carAge: car1Age });
-  const results2 = useCarCost({ ...car2, carAge: car2Age });
-  const costDifference = results2.annualTotal - results1.annualTotal;
+const results1 = useOwnershipCost({
+  ...car1,
+  carAge: car1Age,
+  miscCosts: 0,
+  ownershipYears,
+});
+
+const results2 = useOwnershipCost({
+  ...car2,
+  carAge: car2Age,
+  miscCosts: 0,
+  ownershipYears,
+});
+const costDifference = results2.totalCost - results1.totalCost;
 const isCar2Cheaper = costDifference < 0;
 
-  const cardClass =
-    "rounded-3xl border border-slate-300 bg-white p-6 shadow-md shadow-slate-200/70";
+const cardClass =
+  "rounded-[2rem] border border-white/70 bg-white/90 p-5 shadow-xl shadow-slate-200/70 backdrop-blur sm:p-6";
 
-  const inputClass =
-    "w-full rounded-2xl border border-slate-400 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-200";
+const inputClass =
+  "w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition-all duration-200 focus:border-slate-950 focus:ring-4 focus:ring-slate-950/10";
 
   const labelClass =
     "mb-2 block text-sm font-medium text-slate-700";
 
   return (
-    <main className="min-h-screen bg-slate-100 text-slate-900">
-      <div className="mx-auto max-w-7xl px-6 py-8 md:px-10 md:py-10">
+<main className="min-h-screen bg-[#f8fafc] text-slate-900">
+      <div className="mx-auto max-w-7xl px-4 py-6 md:px-10 md:py-10">
 
         <Navbar />
 
         <div className="mb-8">
-          <h1 className="mb-3 text-4xl font-extrabold tracking-tight text-slate-900 md:text-5xl">
+          <h1 className="mb-3 text-3xl font-extrabold tracking-tight text-slate-900 md:text-5xl">
             Compare Two Cars
           </h1>
 
@@ -120,6 +132,31 @@ const isCar2Cheaper = costDifference < 0;
             Compare the real cost of ownership side-by-side including fuel,
             insurance, tax, maintenance, and depreciation.
           </p>
+
+<div className="mt-5 flex items-center gap-3">
+  <span className="text-sm font-medium text-slate-600">
+    Ownership period:
+  </span>
+
+  <div className="flex gap-2">
+    {[1, 2, 3, 4, 5].map((year) => (
+      <button
+        key={year}
+        type="button"
+        onClick={() => setOwnershipYears(year)}
+        className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${
+          ownershipYears === year
+            ? "bg-slate-950 text-white"
+            : "bg-white text-slate-700 border border-slate-200 hover:border-slate-400"
+        }`}
+      >
+        {year}y
+      </button>
+    ))}
+  </div>
+</div>
+
+
         </div>
 
         {/* INPUTS */}
@@ -166,13 +203,25 @@ const isCar2Cheaper = costDifference < 0;
             Summary
           </h2>
           <div className="mb-4 text-sm text-slate-700">
-  {costDifference === 0 ? (
-    "Both cars cost roughly the same per year."
-  ) : costDifference > 0 ? (
-    <>Car 2 costs <span className="font-semibold">{currency(Math.abs(costDifference))}</span> more per year than Car 1.</>
-  ) : (
-    <>Car 2 is <span className="font-semibold">{currency(Math.abs(costDifference))}</span> cheaper per year than Car 1.</>
-  )}
+{costDifference === 0 ? (
+  `Both cars cost roughly the same over ${ownershipYears} years.`
+) : costDifference > 0 ? (
+  <>
+    Car 2 costs{" "}
+    <span className="font-semibold">
+      {currency(Math.abs(costDifference))}
+    </span>{" "}
+    more over {ownershipYears} years than Car 1.
+  </>
+) : (
+  <>
+    Car 2 is{" "}
+    <span className="font-semibold">
+      {currency(Math.abs(costDifference))}
+    </span>{" "}
+    cheaper over {ownershipYears} years than Car 1.
+  </>
+)}
 </div>
 
           <div className="overflow-x-auto">
@@ -189,10 +238,12 @@ const isCar2Cheaper = costDifference < 0;
 
   {/* Annual Cost */}
   <tr className="border-b border-slate-200">
-    <td className="py-3 font-medium">Annual Cost</td>
+    <td className="py-3 font-medium">
+  Total cost ({ownershipYears} yr)
+</td>
 
     {(() => {
-      const diff = results2.annualTotal - results1.annualTotal;
+      const diff = results2.totalCost - results1.totalCost;
       const equal = Math.abs(diff) < 50;
 
       const car1Class = equal
@@ -211,13 +262,13 @@ const isCar2Cheaper = costDifference < 0;
         <>
           <td>
             <span className={car1Class}>
-              {currency(results1.annualTotal)}
+              {currency(results1.totalCost)}
             </span>
           </td>
 
           <td>
             <span className={car2Class}>
-              {currency(results2.annualTotal)}
+              {currency(results2.totalCost)}
             </span>
           </td>
         </>
@@ -230,7 +281,7 @@ const isCar2Cheaper = costDifference < 0;
     <td className="py-3 font-medium">Monthly Cost</td>
 
     {(() => {
-      const diff = results2.monthlyTotal - results1.monthlyTotal;
+      const diff = results2.monthlyCost - results1.monthlyCost;
       const equal = Math.abs(diff) < 5;
 
       const car1Class = equal
@@ -249,13 +300,13 @@ const isCar2Cheaper = costDifference < 0;
         <>
           <td>
             <span className={car1Class}>
-              {currency(results1.monthlyTotal)}
+              {currency(results1.monthlyCost)}
             </span>
           </td>
 
           <td>
             <span className={car2Class}>
-              {currency(results2.monthlyTotal)}
+              {currency(results2.monthlyCost)}
             </span>
           </td>
         </>
