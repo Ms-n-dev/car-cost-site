@@ -39,7 +39,45 @@ fuelType: "" | "petrol" | "diesel" | "premium_petrol" | "electric";
   repairs: number | "";
   miscCosts: number | "";
 };
+const BRAND_DEFAULT_COSTS: Record<string, {
+  insurance: number;
+  servicing: number;
+  tyres: number;
+  repairs: number;
+  miscCosts: number;
+  mpg: number;
+}> = {
+BMW: { insurance: 1200, servicing: 650, tyres: 400, repairs: 500, miscCosts: 0, mpg: 38 },
+AUDI: { insurance: 1150, servicing: 600, tyres: 380, repairs: 450, miscCosts: 0, mpg: 40 },
+MERCEDES: { insurance: 1200, servicing: 650, tyres: 400, repairs: 500, miscCosts: 0, mpg: 39 },
+VOLKSWAGEN: { insurance: 900, servicing: 450, tyres: 300, repairs: 350, miscCosts: 0, mpg: 45 },
+FORD: { insurance: 800, servicing: 400, tyres: 280, repairs: 300, miscCosts: 0, mpg: 44 },
+VAUXHALL: { insurance: 750, servicing: 380, tyres: 260, repairs: 300, miscCosts: 0, mpg: 44 },
+TOYOTA: { insurance: 750, servicing: 350, tyres: 250, repairs: 250, miscCosts: 0, mpg: 50 },
+HONDA: { insurance: 800, servicing: 380, tyres: 260, repairs: 280, miscCosts: 0, mpg: 47 },
+HYUNDAI: { insurance: 700, servicing: 350, tyres: 240, repairs: 250, miscCosts: 0, mpg: 47 },
+KIA: { insurance: 700, servicing: 350, tyres: 240, repairs: 250, miscCosts: 0, mpg: 47 },
+NISSAN: { insurance: 750, servicing: 380, tyres: 260, repairs: 300, miscCosts: 0, mpg: 45 },
+PEUGEOT: { insurance: 750, servicing: 380, tyres: 260, repairs: 300, miscCosts: 0, mpg: 50 },
+RENAULT: { insurance: 750, servicing: 380, tyres: 260, repairs: 300, miscCosts: 0, mpg: 48 },
+LAND_ROVER: { insurance: 1500, servicing: 900, tyres: 600, repairs: 900, miscCosts: 0, mpg: 30 },
+PORSCHE: { insurance: 1800, servicing: 1200, tyres: 800, repairs: 1000, miscCosts: 0, mpg: 25 },
+DEFAULT: { insurance: 900, servicing: 450, tyres: 300, repairs: 350, miscCosts: 0, mpg: 42 },
+};
+function getBrandDefaults(make?: string) {
+  const key = (make || "")
+    .toUpperCase()
+    .replace(/\s+/g, "_");
 
+  return BRAND_DEFAULT_COSTS[key] || BRAND_DEFAULT_COSTS.DEFAULT;
+}
+function getDefaultFuelPrice(fuelType: V2FormData["fuelType"]) {
+  if (fuelType === "diesel") return 155;
+  if (fuelType === "premium_petrol") return 165;
+  if (fuelType === "electric") return 8;
+
+  return 150;
+}
 const initialData: V2FormData = {
   reg: "",
   makeModel: "",
@@ -157,8 +195,50 @@ const results = {
     setData((prev) => ({ ...prev, ...patch }));
   };
 
-  const next = () => setStep((prev) => Math.min(prev + 1, 4));
-  const back = () => setStep((prev) => Math.max(prev - 1, 1));
+const next = () => {
+  setStep((prev) => {
+    if (prev === 2) {
+      const make =
+        data.makeModel.toUpperCase().startsWith("LAND ROVER")
+          ? "LAND ROVER"
+          : data.makeModel.split(" ")[0];
+
+      const brandDefaults = getBrandDefaults(make);
+setData((current) => ({
+  ...current,
+  insurance: current.insurance === "" ? brandDefaults.insurance : current.insurance,
+  servicing: current.servicing === "" ? brandDefaults.servicing : current.servicing,
+  tyres: current.tyres === "" ? brandDefaults.tyres : current.tyres,
+  repairs: current.repairs === "" ? brandDefaults.repairs : current.repairs,
+  miscCosts: current.miscCosts === "" ? brandDefaults.miscCosts : current.miscCosts,
+
+  efficiency:
+    current.efficiency === ""
+      ? data.fuelType === "electric"
+        ? 3.5
+        : brandDefaults.mpg
+      : current.efficiency,
+
+  fuelPrice:
+    current.fuelPrice === ""
+      ? getDefaultFuelPrice(data.fuelType)
+      : current.fuelPrice,
+}));
+
+      return 4;
+    }
+
+    return Math.min(prev + 1, 4);
+  });
+};
+const back = () => {
+  setStep((prev) => {
+    // results -> purchase
+    if (prev === 4) return 2;
+
+    return Math.max(prev - 1, 1);
+  });
+};
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#f8fafc] px-4 py-4 text-slate-950 sm:py-6">

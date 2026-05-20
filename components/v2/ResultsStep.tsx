@@ -53,7 +53,9 @@ export default function ResultsStep({
   const carName = data.reg || data.makeModel || "This car";
   const [financeModalOpen, setFinanceModalOpen] = useState(false);
 const [emailModalOpen, setEmailModalOpen] = useState(false);
+const [showAccuracyInputs, setShowAccuracyInputs] = useState(false);
 const hasTrackedResults = useRef(false);
+const topRef = useRef<HTMLDivElement | null>(null);
 
 useEffect(() => {
   if (hasTrackedResults.current) return;
@@ -85,7 +87,10 @@ useEffect(() => {
 
 
   return (
-    <section className="mx-auto w-full max-w-4xl">
+<section
+  ref={topRef}
+  className="mx-auto w-full max-w-4xl"
+>
       <div className="rounded-[2.5rem] bg-slate-950 p-6 text-white shadow-2xl shadow-slate-300 sm:p-10">
         <p className="mb-3 text-sm font-semibold uppercase tracking-[0.24em] text-slate-400">
           True cost
@@ -129,7 +134,7 @@ useEffect(() => {
     value={data.ownershipYears}
     onChange={(e) =>
       updateData({
-        ownershipYears: Number(e.target.value),
+        ownershipYears: e.target.value === "" ? "" : Number(e.target.value),
       })
     }
     className="mt-5 w-full accent-white"
@@ -167,6 +172,16 @@ useEffect(() => {
               {data.purchaseType}
             </div>
           </div>
+        </div>
+
+        <div className="mt-4 rounded-2xl border border-white/10 bg-white/10 p-4">
+          <p className="text-sm font-medium text-white">
+            Using estimated running costs
+          </p>
+
+          <p className="mt-1 text-sm text-slate-300">
+            We’ve used average costs for insurance, servicing, tyres and repairs. You can improve accuracy below.
+          </p>
         </div>
       </div>
 
@@ -251,7 +266,7 @@ onClick={() => {
 }}
   className="rounded-2xl bg-slate-950 px-5 py-4 font-semibold text-white"
 >
-  Get finance quotes
+  See finance deals for this car
 </button>
 
 <button
@@ -281,7 +296,188 @@ onClick={() => {
           </div>
         </div>
       </div>
+      <div className="mt-6 rounded-[2rem] border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200/70">
+        <button
+          type="button"
+          onClick={() => {
+  const opening = !showAccuracyInputs;
 
+  if (opening) {
+    trackEvent("opened_improve_accuracy");
+  }
+
+  setShowAccuracyInputs((prev) => !prev);
+}}
+          className="flex w-full items-center justify-between"
+        >
+          <div className="text-left">
+            <h2 className="text-xl font-semibold text-slate-950">
+              Improve accuracy
+            </h2>
+
+            <p className="mt-1 text-sm text-slate-500">
+              Use your real running costs instead of estimated averages.
+            </p>
+          </div>
+
+          <span className="text-sm font-semibold text-slate-700">
+            {showAccuracyInputs ? "Hide" : "Edit"}
+          </span>
+        </button>
+
+        {showAccuracyInputs && (
+          <div className="mt-6 grid gap-4 sm:grid-cols-2">
+            <div>
+              <label className="text-sm font-medium text-slate-700">
+                Insurance per year
+              </label>
+
+              <input
+                type="number"
+                value={data.insurance}
+                onChange={(e) =>
+                  updateData({
+                    insurance: e.target.value === "" ? "" : Number(e.target.value),
+                  })
+                }
+                className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3"
+              />
+            </div>
+
+
+<div>
+  <label className="text-sm font-medium text-slate-700">
+    Annual miles
+  </label>
+
+  <input
+    type="number"
+    value={data.annualMiles}
+    onChange={(e) =>
+      updateData({
+        annualMiles: e.target.value === "" ? "" : Number(e.target.value),
+      })
+    }
+    className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3"
+  />
+</div>
+
+
+
+            <div>
+              <label className="text-sm font-medium text-slate-700">
+                Servicing per year
+              </label>
+
+              <input
+                type="number"
+                value={data.servicing}
+                onChange={(e) =>
+                  updateData({
+                    servicing: e.target.value === "" ? "" : Number(e.target.value),
+                  })
+                }
+                className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3"
+              />
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-slate-700">
+                Tyres per year
+              </label>
+
+              <input
+                type="number"
+                value={data.tyres}
+                onChange={(e) =>
+                  updateData({
+                    tyres: e.target.value === "" ? "" : Number(e.target.value),
+                  })
+                }
+                className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3"
+              />
+            </div>
+
+
+<div>
+  <label className="text-sm font-medium text-slate-700">
+    {data.fuelType === "electric"
+      ? "Miles per kWh"
+      : "MPG"}
+  </label>
+
+  <input
+    type="number"
+    value={data.efficiency}
+    onChange={(e) =>
+      updateData({
+        efficiency: e.target.value === "" ? "" : Number(e.target.value),
+      })
+    }
+    className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3"
+  />
+</div>
+<div>
+  <label className="text-sm font-medium text-slate-700">
+    {data.fuelType === "electric"
+      ? "Electricity price (p/kWh)"
+      : "Fuel price (p/litre)"}
+  </label>
+
+  <input
+    type="number"
+    value={data.fuelPrice}
+    onChange={(e) =>
+      updateData({
+        fuelPrice: e.target.value === "" ? "" : Number(e.target.value),
+      })
+    }
+    className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3"
+  />
+</div>
+
+
+            <div>
+              <label className="text-sm font-medium text-slate-700">
+                Repairs per year
+              </label>
+
+              <input
+                type="number"
+                value={data.repairs}
+                onChange={(e) =>
+                  updateData({
+                    repairs: e.target.value === "" ? "" : Number(e.target.value),
+                  })
+                }
+                className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3"
+              />
+
+            </div>
+<button
+  type="button"
+  onClick={() => {
+  trackEvent("clicked_recalculate_result", {
+    ownership_years: data.ownershipYears,
+    purchase_type: data.purchaseType,
+    total_cost: Math.round(results.totalCost),
+    monthly_cost: Math.round(results.monthlyCost),
+  });
+
+  setShowAccuracyInputs(false);
+
+  topRef.current?.scrollIntoView({
+    behavior: "smooth",
+    block: "start",
+  });
+}}
+className="mt-2 rounded-2xl bg-slate-950 px-5 py-4 font-semibold text-white sm:col-span-2"
+>
+  Recalculate result
+</button>
+          </div>
+        )}
+      </div>
       <div className="mt-6 flex gap-3">
         <button
           type="button"

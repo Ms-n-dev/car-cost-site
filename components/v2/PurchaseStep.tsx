@@ -210,7 +210,7 @@ export default function PurchaseStep({
             onClick={next}
             className="w-2/3 rounded-2xl bg-slate-950 px-5 py-4 font-semibold text-white shadow-lg shadow-slate-300 transition disabled:cursor-not-allowed disabled:opacity-40"
           >
-            Continue
+            See results
           </button>
         </div>
       </div>
