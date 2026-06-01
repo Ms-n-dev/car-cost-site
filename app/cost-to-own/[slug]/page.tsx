@@ -106,7 +106,7 @@ return (
         </Link>
 
         <Link
-          href="/v2"
+          href="/"
           className="transition hover:text-slate-950"
         >
           Calculate your own costs →
@@ -225,7 +225,7 @@ return (
           </p>
 
           <Link
-            href="/v2"
+            href="/"
             className="mt-6 block rounded-2xl bg-slate-950 px-5 py-4 text-center font-semibold text-white"
           >
             Calculate your own {car.model} costs
@@ -292,7 +292,7 @@ return (
         </p>
 
         <Link
-          href="/v2"
+          href="/"
           className="mt-6 block rounded-2xl bg-slate-950 px-5 py-4 text-center font-semibold text-white"
         >
           Calculate your own {car.model} costs

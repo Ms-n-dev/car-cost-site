@@ -48,7 +48,7 @@ const popularCars = popularSlugs.flatMap((slug) => {
 
           <p className="mt-6 text-slate-300">
             Looking for your exact ownership costs?{" "}
-            <Link href="/v2" className="font-semibold text-white underline">
+            <Link href="/" className="font-semibold text-white underline">
               Use the free CarCalc calculator.
             </Link>
           </p>
