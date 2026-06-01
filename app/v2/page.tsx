@@ -260,6 +260,10 @@ const back = () => {
     Compare
   </Link>
 
+  <Link href="/cost-to-own" className="transition hover:text-slate-950">
+    Ownership guides
+  </Link>
+
   <Link href="/how-it-works" className="transition hover:text-slate-950">
     How it works
   </Link>
