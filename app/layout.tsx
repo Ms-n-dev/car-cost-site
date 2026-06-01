@@ -11,6 +11,9 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Car Cost Calculator",
   description: "Total Car Ownership Cost Calculator",
+  verification: {
+    google: "M6m2mPst28pU7jgnoQLczUgcSx7__5xAlxVjdiatLlo",
+  },
 };
 
 export default function RootLayout({
