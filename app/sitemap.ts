@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { costToOwnCars } from "@/data/costToOwnCars";
+import { costComparisons } from "@/data/costComparisons";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = "https://carcalc.app";
@@ -29,6 +30,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: new Date(),
     })
   );
-
-  return [...staticPages, ...costToOwnPages];
+const comparisonPages: MetadataRoute.Sitemap = Object.keys(costComparisons).map(
+  (slug) => ({
+    url: `${baseUrl}/car-comparison/${slug}`,
+    lastModified: new Date(),
+  })
+);
+return [...staticPages, ...costToOwnPages, ...comparisonPages];
 }
