@@ -201,6 +201,13 @@ useEffect(() => {
           ? results.totalDepreciation
           : results.financeTotal,
     },
+        {
+      label: "Maintenance",
+      value:
+        results.servicingTotal +
+        results.tyresTotal +
+        results.repairsTotal,
+    },
     {
       label: "Fuel",
       value: results.fuelTotal,
@@ -213,20 +220,14 @@ useEffect(() => {
       label: "Tax",
       value: results.taxTotal,
     },
-    {
-      label: "Maintenance",
-      value:
-        results.servicingTotal +
-        results.tyresTotal +
-        results.repairsTotal,
-    },
+
     {
       label: "Other costs",
       value: results.miscTotal,
     },
   ]
     .filter((item) => item.value > 0)
-    .sort((a, b) => b.value - a.value)
+
     .map((item) => (
       <div
         key={item.label}
