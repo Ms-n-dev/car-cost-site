@@ -51,6 +51,11 @@ function NumberInput({
 
 export default function CostsStep({ data, updateData, next, back }: Props) {
   const [showExtra, setShowExtra] = useState(false);
+  const canContinue =
+    data.fuelType !== "" &&
+    Number(data.efficiency) > 0 &&
+    data.fuelPrice !== "" &&
+    data.tax !== "";
 
   return (
     <StepLayout
@@ -209,7 +214,8 @@ className={`w-full appearance-none rounded-2xl border border-slate-200 bg-transp
 
           <button
             onClick={next}
-            className="w-2/3 rounded-2xl bg-slate-950 px-5 py-4 font-semibold text-white shadow-lg shadow-slate-300"
+            disabled={!canContinue}
+            className="w-2/3 rounded-2xl bg-slate-950 px-5 py-4 font-semibold text-white shadow-lg shadow-slate-300 disabled:cursor-not-allowed disabled:opacity-40"
           >
             See results
           </button>

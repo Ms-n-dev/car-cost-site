@@ -1341,7 +1341,7 @@ For many UK drivers, the Golf GTI remains one of the best all-round used perform
   price: 22000,
   year: 2021,
   fuelType: "electric",
-  mpg: 0,
+  mpg: 3.5,
   insurance: 1200,
   tax: 0,
   servicing: 200,

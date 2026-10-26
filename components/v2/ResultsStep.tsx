@@ -1,4 +1,5 @@
 import type { V2FormData } from "@/app/v2/page";
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import FinanceLeadModal from "./FinanceLeadModal";
 import EmailBreakdownModal from "./EmailBreakdownModal";
@@ -34,15 +35,6 @@ function money(value: number) {
   }).format(Number.isFinite(value) ? value : 0);
 }
 
-function BreakdownRow({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="flex items-center justify-between border-b border-slate-100 py-3 last:border-0">
-      <span className="text-sm text-slate-500">{label}</span>
-      <span className="font-semibold text-slate-950">{money(value)}</span>
-    </div>
-  );
-}
-
 export default function ResultsStep({
   data,
   results,
@@ -68,7 +60,7 @@ useEffect(() => {
     total_cost: Math.round(results.totalCost),
     monthly_cost: Math.round(results.monthlyCost),
   });
-}, []);
+}, [data.ownershipYears, data.purchaseType, results.monthlyCost, results.totalCost]);
 
 useEffect(() => {
   const modalOpen = financeModalOpen || emailModalOpen;
@@ -93,22 +85,24 @@ useEffect(() => {
 >
       <div className="rounded-[2.5rem] bg-slate-950 p-6 text-white shadow-2xl shadow-slate-300 sm:p-10">
         <p className="mb-3 text-sm font-semibold uppercase tracking-[0.24em] text-slate-400">
-          True cost
+          Estimated cost
         </p>
 
 <h1 className="max-w-2xl text-3xl font-semibold leading-tight tracking-tight sm:text-6xl">
-  {carName} will cost around{" "}
+  {carName} is estimated at{" "}
   <span className="whitespace-nowrap">
     {money(results.monthlyCost)}/month
   </span>
 </h1>
 
         <p className="mt-5 max-w-xl text-slate-300">
-          Over {data.ownershipYears} years, the estimated total cost is{" "}
+          Over {data.ownershipYears} years, the estimated total is{" "}
           <span className="font-semibold text-white">
             {money(results.totalCost)}
           </span>
-          .
+          {data.purchaseType === "finance" &&
+            ". Finance total includes payments due during this period and any entered final payment due within it; it does not subtract the car's value at the end."}
+          {data.purchaseType === "cash" && "."}
         </p>
 
 
@@ -176,11 +170,11 @@ useEffect(() => {
 
         <div className="mt-4 rounded-2xl border border-white/10 bg-white/10 p-4">
           <p className="text-sm font-medium text-white">
-            Using estimated running costs
+            Using illustrative running-cost defaults
           </p>
 
           <p className="mt-1 text-sm text-slate-300">
-            We’ve used average costs for insurance, servicing, tyres and repairs. You can improve accuracy below.
+            Defaults are not live quotes or a market valuation. Replace them with your own insurance, tax and maintenance figures below.
           </p>
         </div>
       </div>
@@ -267,7 +261,7 @@ onClick={() => {
 }}
   className="rounded-2xl bg-slate-950 px-5 py-4 font-semibold text-white"
 >
-  See finance deals for this car
+  Send finance enquiry
 </button>
 
 <button
@@ -281,19 +275,45 @@ onClick={() => {
   Email me this breakdown
 </button>
 
-            <button
-              type="button"
-              className="rounded-2xl border border-slate-200 bg-white px-5 py-4 font-semibold text-slate-800"
+            <Link
+              href="/compare"
+              onClick={() => {
+                const [make, model] = data.makeModel.split(" | ");
+                const comparisonCar = {
+                  name: [make, model].filter(Boolean).join(" ") || data.reg || "Car 1",
+                  carValue: Number(data.carValue) || 0,
+                  carYear: Number(data.carYear) || new Date().getFullYear() - 5,
+                  annualMiles: Number(data.annualMiles) || 0,
+                  currentMileage: Number(data.currentMileage) || 0,
+                  carType: "standard",
+                  fuelType: data.fuelType || "petrol",
+                  efficiency: Number(data.efficiency) || 0,
+                  fuelPrice: Number(data.fuelPrice) || 0,
+                  insurance: Number(data.insurance) || 0,
+                  tax: Number(data.tax) || 0,
+                  servicing: Number(data.servicing) || 0,
+                  tyres: Number(data.tyres) || 0,
+                  repairsBuffer: Number(data.repairs) || 0,
+                  miscCosts: Number(data.miscCosts) || 0,
+                };
+
+                try {
+                  window.localStorage.setItem("car1", JSON.stringify(comparisonCar));
+                } catch {
+                  return;
+                }
+              }}
+              className="rounded-2xl border border-slate-200 bg-white px-5 py-4 text-center font-semibold text-slate-800"
             >
               Compare another car
-            </button>
+            </Link>
 
-            <button
-              type="button"
-              className="rounded-2xl border border-slate-200 bg-white px-5 py-4 font-semibold text-slate-800"
+            <Link
+              href="/cost-to-own"
+              className="rounded-2xl border border-slate-200 bg-white px-5 py-4 text-center font-semibold text-slate-800"
             >
-              Find cheaper alternatives
-            </button>
+              Browse ownership guides
+            </Link>
           </div>
         </div>
       </div>
@@ -339,6 +359,23 @@ onClick={() => {
                 onChange={(e) =>
                   updateData({
                     insurance: e.target.value === "" ? "" : Number(e.target.value),
+                  })
+                }
+                className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3"
+              />
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-slate-700">
+                Road tax per year
+              </label>
+              <input
+                type="number"
+                min="0"
+                value={data.tax}
+                onChange={(e) =>
+                  updateData({
+                    tax: e.target.value === "" ? "" : Number(e.target.value),
                   })
                 }
                 className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3"

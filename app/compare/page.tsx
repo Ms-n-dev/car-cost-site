@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState, useSyncExternalStore } from "react";
 import { useOwnershipCost } from "@/hooks/useOwnershipCost";
 import Navbar from "../../components/Navbar";
 import CarInputs from "../../components/CarInputs";
+import { DEFAULT_FUEL_PRICES } from "@/lib/vehicleDefaults";
 
 function currency(value: number) {
   return new Intl.NumberFormat("en-GB", {
@@ -22,72 +23,112 @@ function currency2(value: number) {
   }).format(value || 0);
 }
 
-export default function ComparePage() {
+type CompareCarState = {
+  name?: string;
+  carValue: number | string;
+  carYear: number;
+  annualMiles: number | string;
+  currentMileage: number | string;
+  carType: string;
+  fuelType: string;
+  efficiency: number | string;
+  fuelPrice: number | string;
+  insurance: number | string;
+  tax: number | string;
+  servicing: number | string;
+  tyres: number | string;
+  repairsBuffer: number | string;
+  carTypeOpen: boolean;
+  fuelTypeOpen: boolean;
+  carYearOpen: boolean;
+  miscCosts?: number | string;
+};
 
-  const currentYear = new Date().getFullYear();
-const [ownershipYears, setOwnershipYears] = useState(3);
+const defaultCarState = (): CompareCarState => ({
+  carValue: 18000,
+  carYear: new Date().getFullYear() - 5,
+  annualMiles: 10000,
+  currentMileage: 50000,
+  carType: "standard",
+  fuelType: "petrol",
+  efficiency: 38,
+  fuelPrice: DEFAULT_FUEL_PRICES.petrol,
+  insurance: 900,
+  tax: 190,
+  servicing: 350,
+  tyres: 300,
+  repairsBuffer: 400,
+  carTypeOpen: false,
+  fuelTypeOpen: false,
+  carYearOpen: false,
+});
 
-  // CAR 1
-  const [car1, setCar1] = useState({
-    carValue: 18000,
-    carYear: currentYear - 5,
-    annualMiles: 10000,
-    currentMileage: 50000,
-    carType: "standard",
-    fuelType: "petrol",
-    efficiency: 38,
-    fuelPrice: 158.5,
-    insurance: 900,
-    tax: 190,
-    servicing: 350,
-    tyres: 300,
-    repairsBuffer: 400,
-    carTypeOpen: false,
-fuelTypeOpen: false,
-carYearOpen: false,
-  });
+function subscribeToSavedCar(onChange: () => void) {
+  window.addEventListener("storage", onChange);
+  return () => window.removeEventListener("storage", onChange);
+}
 
-  // CAR 2
-  const [car2, setCar2] = useState({
-    ...car1,
-  });
-useEffect(() => {
-  const savedCar = localStorage.getItem("car1");
-
-  if (savedCar) {
-    const parsed = JSON.parse(savedCar);
-
-    setCar1(parsed);
-
-    // 👇 This is important
-    // Prefill car2 with SAME base but slightly tweaked
-    setCar2({
-      ...parsed,
-      carValue: parsed.carValue * 1.1, // +10% price so user sees a difference
-    });
+function getSavedCarSnapshot() {
+  try {
+    return window.localStorage.getItem("car1");
+  } catch {
+    return null;
   }
-}, []);
-  // DERIVED AGE
+}
+
+function parseSavedCar(value: string | null): CompareCarState {
+  if (!value) return defaultCarState();
+
+  try {
+    const parsed = JSON.parse(value) as Partial<CompareCarState>;
+    return parsed && typeof parsed === "object"
+      ? { ...defaultCarState(), ...parsed }
+      : defaultCarState();
+  } catch {
+    return defaultCarState();
+  }
+}
+
+export default function ComparePage() {
+  const currentYear = new Date().getFullYear();
+  const [ownershipYears, setOwnershipYears] = useState(3);
+  const savedCar = useSyncExternalStore(
+    subscribeToSavedCar,
+    getSavedCarSnapshot,
+    () => null
+  );
+  const savedCarState = useMemo(() => parseSavedCar(savedCar), [savedCar]);
+  const [car1Edits, setCar1Edits] = useState<CompareCarState | null>(null);
+  const car1 = car1Edits ?? savedCarState;
+  const setCar1: React.Dispatch<React.SetStateAction<CompareCarState>> = (action) => {
+    setCar1Edits((current) =>
+      typeof action === "function"
+        ? action(current ?? savedCarState)
+        : action
+    );
+  };
+  const [car2, setCar2] = useState<CompareCarState>(() => ({
+    ...defaultCarState(),
+    carValue: 19800,
+  }));
+
   const car1Age = useMemo(() => currentYear - car1.carYear, [car1.carYear, currentYear]);
   const car2Age = useMemo(() => currentYear - car2.carYear, [car2.carYear, currentYear]);
 
-  const fuelDefaults = {
-    petrol: 158.5,
-    diesel: 191.5,
-    premium_petrol: 171.0,
-    electric: 7.5,
-  } as const;
-
-  function handleFuelTypeChange(setter: any) {
+  function handleFuelTypeChange(setter: React.Dispatch<React.SetStateAction<CompareCarState>>) {
     return (value: string) => {
-      setter((prev: any) => ({
+      setter((prev) => ({
         ...prev,
         fuelType: value,
         fuelPrice:
+          DEFAULT_FUEL_PRICES[value as keyof typeof DEFAULT_FUEL_PRICES] ??
+          DEFAULT_FUEL_PRICES.petrol,
+        efficiency:
           value === "electric"
-            ? fuelDefaults.electric
-            : fuelDefaults[value as keyof typeof fuelDefaults],
-        efficiency: value === "electric" ? 3.5 : prev.efficiency < 8 ? 38 : prev.efficiency,
+            ? 3.5
+            : Number(prev.efficiency) < 8
+              ? 38
+              : Number(prev.efficiency),
       }));
     };
   }
@@ -95,18 +136,17 @@ useEffect(() => {
 const results1 = useOwnershipCost({
   ...car1,
   carAge: car1Age,
-  miscCosts: 0,
+  miscCosts: car1.miscCosts ?? 0,
   ownershipYears,
 });
 
 const results2 = useOwnershipCost({
   ...car2,
   carAge: car2Age,
-  miscCosts: 0,
+  miscCosts: car2.miscCosts ?? 0,
   ownershipYears,
 });
 const costDifference = results2.totalCost - results1.totalCost;
-const isCar2Cheaper = costDifference < 0;
 
 const cardClass =
   "rounded-[2rem] border border-white/70 bg-white/90 p-5 shadow-xl shadow-slate-200/70 backdrop-blur sm:p-6";
@@ -164,9 +204,17 @@ const inputClass =
 
           {/* Car 1 */}
           <section className={cardClass}>
-            <h2 className="text-xl font-bold text-slate-900 mb-4">
-              Car 1
-            </h2>
+            <label className="mb-4 block">
+              <span className="mb-2 block text-sm font-medium text-slate-700">Car 1 label</span>
+              <input
+                aria-label="Car 1 label"
+                value={car1.name ?? "Car 1"}
+                onChange={(event) =>
+                  setCar1((current) => ({ ...current, name: event.target.value }))
+                }
+                className={inputClass}
+              />
+            </label>
 
             <CarInputs
               data={car1}
@@ -181,9 +229,17 @@ const inputClass =
 
           {/* Car 2 */}
           <section className={cardClass}>
-            <h2 className="text-xl font-bold text-slate-900 mb-4">
-              Car 2
-            </h2>
+            <label className="mb-4 block">
+              <span className="mb-2 block text-sm font-medium text-slate-700">Car 2 label</span>
+              <input
+                aria-label="Car 2 label"
+                value={car2.name ?? "Car 2"}
+                onChange={(event) =>
+                  setCar2((current) => ({ ...current, name: event.target.value }))
+                }
+                className={inputClass}
+              />
+            </label>
 
             <CarInputs
               data={car2}
@@ -207,19 +263,19 @@ const inputClass =
   `Both cars cost roughly the same over ${ownershipYears} years.`
 ) : costDifference > 0 ? (
   <>
-    Car 2 costs{" "}
+    {car2.name || "Car 2"} costs{" "}
     <span className="font-semibold">
       {currency(Math.abs(costDifference))}
     </span>{" "}
-    more over {ownershipYears} years than Car 1.
+    more over {ownershipYears} years than {car1.name || "Car 1"}.
   </>
 ) : (
   <>
-    Car 2 is{" "}
+    {car2.name || "Car 2"} is{" "}
     <span className="font-semibold">
       {currency(Math.abs(costDifference))}
     </span>{" "}
-    cheaper over {ownershipYears} years than Car 1.
+    cheaper over {ownershipYears} years than {car1.name || "Car 1"}.
   </>
 )}
 </div>
@@ -229,8 +285,8 @@ const inputClass =
               <thead>
                 <tr className="border-b border-slate-300 text-left">
                   <th className="py-2">Metric</th>
-<th>Car 1</th>
-<th>Car 2</th>
+<th>{car1.name || "Car 1"}</th>
+<th>{car2.name || "Car 2"}</th>
                 </tr>
               </thead>
 

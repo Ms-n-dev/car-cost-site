@@ -4,11 +4,12 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import Navbar from "@/components/Navbar";
 import CarInputs from "@/components/CarInputs";
 import { motion } from "framer-motion";
-import { useCarCost } from "@/hooks/useCarCost";
+import { DEFAULT_FUEL_PRICES } from "@/lib/vehicleDefaults";
+import { useOwnershipCost } from "@/hooks/useOwnershipCost";
 
 declare global {
   interface Window {
-    gtag?: (...args: any[]) => void;
+    gtag?: (...args: unknown[]) => void;
   }
 }
 
@@ -55,7 +56,7 @@ const hasViewedResults = useRef(false);
     carType: "standard",
     fuelType: "petrol",
     efficiency: 38,
-    fuelPrice: 158.5,
+    fuelPrice: Number(DEFAULT_FUEL_PRICES.petrol),
     insurance: 900,
     tax: 190,
     servicing: 350,
@@ -73,12 +74,6 @@ const hasViewedResults = useRef(false);
     return Math.max(currentYear - car.carYear, 0);
   }, [car.carYear, currentYear]);
 
-  const fuelDefaults = {
-    petrol: 158.5,
-    diesel: 191.5,
-    premium_petrol: 171.0,
-    electric: 7.5,
-  } as const;
   const [emailModalOpen, setEmailModalOpen] = useState(false);
 const [breakdownEmail, setBreakdownEmail] = useState("");
 const [emailSending, setEmailSending] = useState(false);
@@ -90,132 +85,29 @@ const [emailError, setEmailError] = useState("");
       ...prev,
       fuelType: value,
       fuelPrice:
-        value === "electric"
-          ? fuelDefaults.electric
-          : fuelDefaults[value as keyof typeof fuelDefaults],
+        DEFAULT_FUEL_PRICES[value as keyof typeof DEFAULT_FUEL_PRICES] ??
+        DEFAULT_FUEL_PRICES.petrol,
       efficiency: value === "electric" ? 3.5 : prev.efficiency < 8 ? 38 : prev.efficiency,
     }));
   }
 
-  const depreciationRate = useMemo(() => {
-    if (carAge <= 2) return 0.18;
-    if (carAge <= 5) return 0.12;
-    if (carAge <= 8) return 0.08;
-    return 0.05;
-  }, [carAge]);
-
-  const mileageFactor = useMemo(() => {
-    if (car.currentMileage <= 30000) return 1.25;
-    if (car.currentMileage <= 80000) return 1.0;
-    if (car.currentMileage <= 120000) return 0.75;
-    return 0.6;
-  }, [car.currentMileage]);
-
-  const carTypeFactor = useMemo(() => {
-    if (car.carType === "luxury") return 1.15;
-    if (car.carType === "performance") return 1.2;
-    return 1.0;
-  }, [car.carType]);
-
-  const usageFactor = useMemo(() => {
-    if (car.annualMiles <= 6000) return 0.9;
-    if (car.annualMiles <= 12000) return 1.0;
-    if (car.annualMiles <= 20000) return 1.15;
-    if (car.annualMiles <= 30000) return 1.3;
-    return 1.5;
-  }, [car.annualMiles]);
-
-  const annualMaintenance = useMemo(() => {
-    return numberOrZero(car.servicing) + numberOrZero(car.tyres) + numberOrZero(car.repairsBuffer);
-  }, [car.servicing, car.tyres, car.repairsBuffer]);
-
-  const results = useMemo(() => {
-const carValue = +car.carValue || 0;
-const annualMiles = +car.annualMiles || 0;
-const currentMileage = +car.currentMileage || 0;
-const efficiency = +car.efficiency || 0;
-const fuelPrice = +car.fuelPrice || 0;
-const insurance = +car.insurance || 0;
-const tax = +car.tax || 0;
-const servicing = +car.servicing || 0;
-const tyres = +car.tyres || 0;
-const repairsBuffer = +car.repairsBuffer || 0;
-    const years = Number(ownershipYears) || 1;
-    const litresPerGallon = 4.54609;
-
-const miscCosts = numberOrZero(car.miscCosts) * years;
-
-let annualFuelCost = 0;
-
-if (car.fuelType === "electric") {
-  const milesPerKwh = Math.max(efficiency, 0.1);
-  const annualKwhUsed = annualMiles / milesPerKwh;
-  annualFuelCost = annualKwhUsed * (fuelPrice / 100);
-} else {
-  const mpg = Math.max(efficiency, 1);
-  const gallonsUsed = annualMiles / mpg;
-  const litresUsed = gallonsUsed * 4.54609;
-  annualFuelCost = litresUsed * (fuelPrice / 100);
-}
-
-let totalDepreciation = 0;
-let currentValue = carValue;
-let mileage = currentMileage;
-
-for (let i = 0; i < years; i++) {
-
-  const ageThisYear = carAge + i;
-
-  let rate = 0.05;
-  if (ageThisYear <= 2) rate = 0.18;
-  else if (ageThisYear <= 5) rate = 0.12;
-  else if (ageThisYear <= 8) rate = 0.08;
-
-  let mileageFactorYear = 1;
-  if (mileage <= 30000) mileageFactorYear = 1.25;
-  else if (mileage <= 80000) mileageFactorYear = 1.0;
-  else if (mileage <= 120000) mileageFactorYear = 0.75;
-  else mileageFactorYear = 0.6;
-
-  const depreciationThisYear =
-    currentValue *
-    rate *
-    mileageFactorYear *
-    carTypeFactor *
-    usageFactor;
-
-  totalDepreciation += depreciationThisYear;
-
-  currentValue -= depreciationThisYear;
-  mileage += annualMiles;
-}
-
-const totalFuelCost = annualFuelCost * years;
-
-
-const totalMaintenance = annualMaintenance * years;
-const totalCost =
-  totalFuelCost +
-  (numberOrZero(car.insurance) * years) +
-  (numberOrZero(car.tax) * years) +
-  totalMaintenance +
-  totalDepreciation +
-  miscCosts;
-
-const monthlyCost = totalCost / (years * 12);
-const costPerMile =
-  totalCost / Math.max(annualMiles * years, 1);
-
-return {
-  totalCost,
-  monthlyCost,
-  costPerMile,
-  totalDepreciation,
-  totalFuelCost,
-  totalInsurance: insurance * years,
-  totalTax: tax * years,
-};
-}, [car, depreciationRate, mileageFactor, carTypeFactor, usageFactor, annualMaintenance, ownershipYears]);
+  const results = useOwnershipCost({
+    carValue: car.carValue,
+    carAge,
+    annualMiles: car.annualMiles,
+    currentMileage: car.currentMileage,
+    carType: car.carType,
+    fuelType: car.fuelType,
+    efficiency: car.efficiency,
+    fuelPrice: car.fuelPrice,
+    insurance: car.insurance,
+    tax: car.tax,
+    servicing: car.servicing,
+    tyres: car.tyres,
+    repairsBuffer: car.repairsBuffer,
+    miscCosts: car.miscCosts,
+    ownershipYears,
+  });
 
 useEffect(() => {
   window.gtag?.("event", "recalculated_result");
@@ -314,7 +206,6 @@ const mileageWarning = useMemo(() => {
   const labelClass = "mb-2 block text-sm font-medium text-slate-700";
   const metricCardClass = "rounded-2xl bg-slate-200 p-4";
   const sectionTitleClass = "text-2xl font-bold text-slate-900";
-  const mutedTextClass = "text-slate-600";
 async function sendBreakdownEmail() {
   setEmailSending(true);
   setEmailError("");
@@ -490,7 +381,7 @@ return (
 
               <div className="flex justify-between">
                 <span>Maintenance</span>
-                <span>{currency(annualMaintenance * ownershipYears)}</span>
+                <span>{currency(results.totalMaintenance)}</span>
               </div>
 
               <div className="flex justify-between">

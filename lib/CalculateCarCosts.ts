@@ -20,7 +20,7 @@ export type CalculateCarCostsInput = {
 };
 
 function numberOrZero(value: number) {
-  return Number.isFinite(value) ? value : 0;
+  return Number.isFinite(value) && value > 0 ? value : 0;
 }
 
 export function calculateCarCosts(input: CalculateCarCostsInput) {
@@ -37,9 +37,9 @@ export function calculateCarCosts(input: CalculateCarCostsInput) {
   const tyres = numberOrZero(+input.tyres);
   const repairsBuffer = numberOrZero(+input.repairsBuffer);
   const miscCosts = numberOrZero(input.miscCosts ?? 0);
-  const years = Number(input.ownershipYears) || 1;
+  const years = Math.min(Math.max(Math.floor(Number(input.ownershipYears) || 1), 1), 10);
 
-  const carAge = Math.max(currentYear - input.carYear, 0);
+  const carAge = Math.max(currentYear - numberOrZero(input.carYear), 0);
 
   const carTypeFactor =
     input.carType === "luxury"
@@ -64,14 +64,17 @@ export function calculateCarCosts(input: CalculateCarCostsInput) {
   let annualFuelCost = 0;
 
   if (input.fuelType === "electric") {
-    const milesPerKwh = Math.max(efficiency, 0.1);
-    const annualKwhUsed = annualMiles / milesPerKwh;
-    annualFuelCost = annualKwhUsed * (fuelPrice / 100);
-  } else {
-    const mpg = Math.max(efficiency, 1);
+    if (efficiency > 0) {
+      const annualKwhUsed = annualMiles / efficiency;
+      annualFuelCost = annualKwhUsed * (fuelPrice / 100);
+    }
+  } else if (["petrol", "diesel", "premium_petrol"].includes(input.fuelType)) {
+    if (efficiency > 0) {
+      const mpg = efficiency;
     const gallonsUsed = annualMiles / mpg;
     const litresUsed = gallonsUsed * 4.54609;
     annualFuelCost = litresUsed * (fuelPrice / 100);
+    }
   }
 
   let totalDepreciation = 0;
@@ -92,8 +95,11 @@ export function calculateCarCosts(input: CalculateCarCostsInput) {
     else if (mileage <= 120000) mileageFactorYear = 0.75;
     else mileageFactorYear = 0.6;
 
-    const depreciationThisYear =
-      currentValue * rate * mileageFactorYear * carTypeFactor * usageFactor;
+    const totalRate = Math.min(
+      rate * mileageFactorYear * carTypeFactor * usageFactor,
+      0.95
+    );
+    const depreciationThisYear = currentValue * totalRate;
 
     totalDepreciation += depreciationThisYear;
     currentValue -= depreciationThisYear;
@@ -116,7 +122,8 @@ export function calculateCarCosts(input: CalculateCarCostsInput) {
 
   const monthlyCost = totalCost / (years * 12);
   const annualCost = totalCost / years;
-  const costPerMile = totalCost / Math.max(annualMiles * years, 1);
+  const totalMiles = annualMiles * years;
+  const costPerMile = totalMiles > 0 ? totalCost / totalMiles : 0;
 
   return {
     annualFuelCost,
@@ -128,6 +135,7 @@ export function calculateCarCosts(input: CalculateCarCostsInput) {
     monthlyCost,
     costPerMile,
     totalDepreciation,
+    estimatedFutureValue: currentValue,
     totalFuelCost,
     totalInsurance,
     totalTax,

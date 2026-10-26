@@ -1,4 +1,5 @@
 import { useState } from "react";
+import Link from "next/link";
 import type { V2FormData } from "@/app/v2/page";
 import { trackEvent } from "@/lib/gtag";
 
@@ -27,6 +28,9 @@ export default function FinanceLeadModal({
     monthlyBudget: "",
     deposit: "",
   });
+  const [consented, setConsented] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState("");
 
   if (!open) return null;
 
@@ -40,9 +44,14 @@ const carName =
   const canSubmit =
     form.name.trim() !== "" &&
     form.email.trim() !== "" &&
-    form.phone.trim() !== "";
+    form.phone.trim() !== "" &&
+    consented &&
+    !sending;
 
 const submitLead = async () => {
+setSending(true);
+setError("");
+try {
 const leadPayload = {
   name: form.name,
   email: form.email,
@@ -58,6 +67,7 @@ const leadPayload = {
 
   monthlyBudget: form.monthlyBudget,
   deposit: form.deposit,
+  consent: consented,
 
   createdAt: new Date().toISOString(),
 };
@@ -71,7 +81,7 @@ const res = await fetch("/api/finance-leads", {
 });
 
 if (!res.ok) {
-  alert("Something went wrong. Please try again.");
+  setError("We could not send your enquiry. Please try again.");
   return;
 }
 
@@ -81,8 +91,13 @@ trackEvent("submitted_finance_lead", {
   ownership_years: data.ownershipYears,
 });
 
-alert("Nice — your finance quote request has been captured.");
+alert("Your enquiry has been sent to the CarCalc team.");
 onClose();
+} catch {
+  setError("We could not send your enquiry. Check your connection and try again.");
+} finally {
+  setSending(false);
+}
   };
 
   return (
@@ -91,16 +106,16 @@ onClose();
         <div className="sticky top-0 z-10 -mx-6 -mt-6 mb-6 flex items-start justify-between gap-4 rounded-t-[2rem] bg-white px-6 pt-6 pb-2">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-400">
-              Finance quotes
+              Finance enquiry
             </p>
 
             <h2 className="mt-2 text-3xl font-semibold tracking-tight text-slate-950">
-              See finance options for {carName}
+              Send a finance enquiry for {carName}
             </h2>
 
             <p className="mt-3 text-sm leading-6 text-slate-500">
-              Leave your details and we’ll use your calculation to help find
-              suitable finance options.
+              Your details will be sent to the CarCalc team. This form does not
+              provide or compare finance offers.
             </p>
           </div>
 
@@ -122,6 +137,9 @@ onClose();
 
         <div className="grid gap-4">
           <input
+            aria-label="First name"
+            autoComplete="given-name"
+            required
             value={form.name}
             onChange={(e) =>
               setForm((prev) => ({ ...prev, name: e.target.value }))
@@ -131,6 +149,9 @@ onClose();
           />
 
           <input
+            aria-label="Email address"
+            autoComplete="email"
+            required
             value={form.email}
             type="email"
             onChange={(e) =>
@@ -141,6 +162,9 @@ onClose();
           />
 
           <input
+            aria-label="Phone number"
+            autoComplete="tel"
+            required
             value={form.phone}
             type="tel"
             onChange={(e) =>
@@ -187,10 +211,20 @@ onClose();
 </div>
 </div>
 
-        <p className="mt-4 text-xs leading-5 text-slate-400">
-          By submitting, you agree to be contacted about finance options. This
-          is not a finance application and won’t affect your credit score.
-        </p>
+        <label className="mt-4 flex items-start gap-3 text-xs leading-5 text-slate-500">
+          <input
+            type="checkbox"
+            checked={consented}
+            onChange={(event) => setConsented(event.target.checked)}
+            className="mt-1"
+          />
+          <span>
+            I agree that CarCalc may use these details to respond to this enquiry.
+            See our <Link href="/privacy" className="underline">Privacy Policy</Link>.
+          </span>
+        </label>
+
+        {error && <p role="alert" className="mt-3 text-sm text-red-700">{error}</p>}
 
         <button
           type="button"
@@ -198,7 +232,7 @@ onClose();
           onClick={submitLead}
           className="mt-5 w-full rounded-2xl bg-slate-950 px-5 py-4 font-semibold text-white shadow-lg shadow-slate-300 transition disabled:cursor-not-allowed disabled:opacity-40"
         >
-          Get finance quotes
+          {sending ? "Sending..." : "Send finance enquiry"}
         </button>
       </div>
     </div>

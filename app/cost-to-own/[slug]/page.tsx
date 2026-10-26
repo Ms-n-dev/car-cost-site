@@ -147,8 +147,12 @@ return (
           </div>
 
           <div className="rounded-3xl bg-white/10 p-5">
-            <div className="text-sm text-slate-400">Typical MPG</div>
-            <div className="mt-2 text-3xl font-bold">{car.mpg}</div>
+            <div className="text-sm text-slate-400">
+              {car.fuelType === "electric" ? "Typical efficiency" : "Typical MPG"}
+            </div>
+            <div className="mt-2 text-3xl font-bold">
+              {car.mpg}{car.fuelType === "electric" ? " mi/kWh" : " mpg"}
+            </div>
           </div>
         </div>
       </section>
@@ -172,7 +176,11 @@ return (
 
             <div className="flex justify-between">
               <span>Tax</span>
-              <strong>{money(car.tax)}</strong>
+              <strong>
+                {car.fuelType === "electric" && car.tax === 0
+                  ? "Not included; check the vehicle's rate"
+                  : money(car.tax)}
+              </strong>
             </div>
 
             <div className="flex justify-between">
@@ -206,7 +214,17 @@ return (
             <ul className="mt-3 space-y-1">
               <li>{annualMiles.toLocaleString()} miles per year</li>
               <li>{ownershipYears} years ownership</li>
-              <li>Petrol at £1.50/litre</li>
+              <li>
+                {car.fuelType === "electric"
+                  ? `Electricity at ${car.fuelPrice}p/kWh`
+                  : `${car.fuelType.replace("_", " ")} at £${(car.fuelPrice / 100).toFixed(2)}/litre`}
+              </li>
+              <li>Figures use illustrative fixed inputs, not live quotes or market valuations.</li>
+              <li>Check your own insurance, tax and vehicle condition before relying on an estimate.</li>
+              <li>Depreciation is modelled and is not a live resale valuation.</li>
+              {car.fuelType === "electric" && car.tax === 0 && (
+                <li>Vehicle tax is not included; check the exact rate for this vehicle.</li>
+              )}
               <li>Depreciation based on age, mileage, usage and car type</li>
             </ul>
           </div>

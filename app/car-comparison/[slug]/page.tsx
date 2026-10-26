@@ -32,7 +32,7 @@ export async function generateMetadata({ params }: Props) {
   if (!comparison) return {};
 
   return {
-    title: `${comparison.title} UK | CarCalc`,
+    title: `${comparison.title} UK`,
     description: `Compare ${comparison.title.toLowerCase()} including fuel, insurance, maintenance, depreciation and monthly ownership costs.`,
   };
 }

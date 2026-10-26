@@ -1,16 +1,27 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import { Analytics } from "@vercel/analytics/react";
+import AnalyticsConsent from "@/components/AnalyticsConsent";
 import "./globals.css";
-import Script from "next/script";
 
 const inter = Inter({
   subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
-  title: "Car Cost Calculator",
-  description: "Total Car Ownership Cost Calculator",
+  metadataBase: new URL("https://carcalc.app"),
+  title: {
+    default: "UK Car Ownership Cost Calculator | CarCalc",
+    template: "%s | CarCalc",
+  },
+  description:
+    "Estimate the cost of owning a car in the UK, including fuel, insurance, tax, maintenance and depreciation.",
+  openGraph: {
+    title: "UK Car Ownership Cost Calculator | CarCalc",
+    description:
+      "Estimate fuel, insurance, tax, maintenance and depreciation to understand your car's ownership cost.",
+    type: "website",
+    url: "https://carcalc.app",
+  },
   verification: {
     google: "M6m2mPst28pU7jgnoQLczUgcSx7__5xAlxVjdiatLlo",
   },
@@ -25,37 +36,7 @@ export default function RootLayout({
     <html lang="en" className="h-full antialiased">
       <body className={`${inter.className} min-h-full flex flex-col`}>
         {children}
-
-<Script id="clarity" strategy="beforeInteractive">
-  {`
-    (function(c,l,a,r,i,t,y){
-      if (typeof c[a] !== "function") {
-        c[a] = function(){(c[a].q = c[a].q || []).push(arguments)};
-      }
-      t = l.createElement(r);
-      t.async = 1;
-      t.src = "https://www.clarity.ms/tag/" + i;
-      y = l.getElementsByTagName(r)[0];
-      y.parentNode.insertBefore(t,y);
-    })(window, document, "clarity", "script", "webk7iqmo5");
-  `}
-</Script>
-
-<Script
-  src="https://www.googletagmanager.com/gtag/js?id=G-0ZDCRFPDN5"
-  strategy="afterInteractive"
-/>
-
-<Script id="google-analytics" strategy="afterInteractive">
-  {`
-    window.dataLayer = window.dataLayer || [];
-    window.gtag = function(){window.dataLayer.push(arguments);};
-    window.gtag('js', new Date());
-    window.gtag('config', 'G-0ZDCRFPDN5');
-  `}
-</Script>
-
-        <Analytics />
+        <AnalyticsConsent />
       </body>
     </html>
   );

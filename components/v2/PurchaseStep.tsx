@@ -15,6 +15,8 @@ function NumberInput({
   placeholder,
   prefix,
   suffix,
+  min,
+  max,
 }: {
   label: string;
   value: number | "";
@@ -22,6 +24,8 @@ function NumberInput({
   placeholder?: string;
   prefix?: string;
   suffix?: string;
+  min?: number;
+  max?: number;
 }) {
   return (
     <div>
@@ -34,6 +38,8 @@ function NumberInput({
 
         <input
           type="number"
+          min={min}
+          max={max}
           value={value}
           onChange={(e) =>
             onChange(e.target.value === "" ? "" : Number(e.target.value))
@@ -64,7 +70,8 @@ export default function PurchaseStep({
       : data.purchaseType === "finance"
       ? data.deposit !== "" &&
         data.monthlyPayment !== "" &&
-        data.financeTermMonths !== ""
+        data.financeTermMonths !== "" &&
+        data.ownershipYears !== ""
       : false;
 
   return (
@@ -150,7 +157,7 @@ export default function PurchaseStep({
   onChange={(value) =>
     updateData({
       ownershipYears:
-        value === "" ? "" : Math.min(Math.max(Number(value), 1), 5),
+                    value === "" ? "" : Math.min(Math.max(Math.floor(value), 1), 5),
     })
   }
   suffix="years"
@@ -162,9 +169,25 @@ export default function PurchaseStep({
         {data.purchaseType === "finance" && (
           <div className="grid gap-4">
             <NumberInput
+              label="Ownership period"
+              value={data.ownershipYears}
+              onChange={(value) =>
+                updateData({
+                  ownershipYears:
+                    value === "" ? "" : Math.min(Math.max(Math.floor(value), 1), 5),
+                })
+              }
+              min={1}
+              max={5}
+              suffix="years"
+              placeholder="3"
+            />
+
+            <NumberInput
               label="Deposit"
               value={data.deposit}
               onChange={(value) => updateData({ deposit: value })}
+              min={0}
               prefix="£"
               placeholder="2000"
             />
@@ -173,6 +196,7 @@ export default function PurchaseStep({
               label="Monthly payment"
               value={data.monthlyPayment}
               onChange={(value) => updateData({ monthlyPayment: value })}
+              min={0}
               prefix="£"
               placeholder="350"
             />
@@ -180,9 +204,25 @@ export default function PurchaseStep({
             <NumberInput
               label="Finance term"
               value={data.financeTermMonths}
-              onChange={(value) => updateData({ financeTermMonths: value })}
+              onChange={(value) =>
+                updateData({
+                  financeTermMonths:
+                    value === "" ? "" : Math.min(Math.max(Math.floor(value), 1), 120),
+                })
+              }
+              min={1}
+              max={120}
               suffix="months"
               placeholder="36"
+            />
+
+            <NumberInput
+              label="Final payment (if keeping the car; optional)"
+              value={data.finalPayment}
+              onChange={(value) => updateData({ finalPayment: value })}
+              min={0}
+              prefix="£"
+              placeholder="0"
             />
 
             <NumberInput

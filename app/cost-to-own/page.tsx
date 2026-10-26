@@ -2,7 +2,7 @@ import Link from "next/link";
 import { costToOwnCars } from "@/data/costToOwnCars";
 
 export const metadata = {
-  title: "UK Car Running Costs & Ownership Guides | CarCalc",
+  title: "UK Car Running Costs & Ownership Guides",
   description:
     "Browse UK car ownership cost guides covering fuel, insurance, servicing, repairs, reliability and depreciation.",
 };

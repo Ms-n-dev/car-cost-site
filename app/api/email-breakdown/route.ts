@@ -1,103 +1,126 @@
 import { Resend } from "resend";
-
-const resendApiKey = process.env.RESEND_API_KEY;
-
-if (!resendApiKey) {
-  throw new Error("RESEND_API_KEY is not set");
-}
-
-const resend = new Resend(resendApiKey);
+import {
+  escapeHtml,
+  isRecord,
+  isValidEmail,
+  nonnegativeNumber,
+  readJsonBody,
+  textField,
+} from "@/lib/requestValidation";
 
 function money(value: number) {
   return new Intl.NumberFormat("en-GB", {
     style: "currency",
     currency: "GBP",
     maximumFractionDigits: 0,
-  }).format(Number.isFinite(value) ? value : 0);
+  }).format(value);
 }
 
-export async function POST(req: Request) {
-  try {
-    const body = await req.json();
+export async function POST(request: Request) {
+  const parsedBody = await readJsonBody(request);
+  if (!parsedBody.ok) {
+    return Response.json(
+      { error: parsedBody.status === 413 ? "Request too large" : "Invalid request" },
+      { status: parsedBody.status }
+    );
+  }
 
-    const {
-      email,
-      ownershipYears,
-      totalCost,
-      monthlyCost,
-      costPerMile,
-      totalFuelCost,
-      totalInsurance,
-      totalTax,
-totalDepreciation,
-totalMaintenance,
-totalMiscCosts,
-annualMiles,
-      carValue,
-      carYear,
-      fuelType,
-      carType,
-    } = body;
+  const body = parsedBody.value;
+  if (!isRecord(body)) {
+    return Response.json({ error: "Invalid request" }, { status: 400 });
+  }
 
-    if (!email || !String(email).includes("@")) {
-      return Response.json({ error: "Invalid email" }, { status: 400 });
-    }
+  const email = textField(body.email, 254);
+  if (!email || !isValidEmail(email)) {
+    return Response.json({ error: "Invalid email" }, { status: 400 });
+  }
 
-    const html = `
-      <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;color:#0f172a;">
-        <h1>Your CarCalc breakdown</h1>
+  const numericFields = [
+    "ownershipYears",
+    "totalCost",
+    "monthlyCost",
+    "costPerMile",
+    "totalFuelCost",
+    "totalInsurance",
+    "totalTax",
+    "totalMaintenance",
+    "totalMiscCosts",
+    "annualMiles",
+    "carValue",
+    "carYear",
+    "purchaseCost",
+  ] as const;
+  const values = Object.fromEntries(
+    numericFields.map((field) => [field, nonnegativeNumber(body[field])])
+  ) as Record<(typeof numericFields)[number], number | null>;
+  const purchaseType = body.purchaseType;
 
-        <p>Here’s your estimated ownership cost breakdown over <strong>${ownershipYears} year(s)</strong>.</p>
+  if (
+    Object.values(values).some((value) => value === null) ||
+    (purchaseType !== "cash" && purchaseType !== "finance") ||
+    !Number.isInteger(values.ownershipYears) ||
+    values.ownershipYears! < 1 ||
+    values.ownershipYears! > 10
+  ) {
+    return Response.json({ error: "Invalid breakdown values" }, { status: 400 });
+  }
 
-        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:16px;margin:20px 0;">
-          <h2 style="margin-top:0;">Summary</h2>
-          <p><strong>Total cost:</strong> ${money(totalCost)}</p>
-          <p><strong>Monthly cost:</strong> ${money(monthlyCost)}</p>
-          <p><strong>Cost per mile:</strong> £${Number(costPerMile || 0).toFixed(2)}</p>
-        </div>
+  if (!process.env.RESEND_API_KEY) {
+    return Response.json({ error: "Email service unavailable" }, { status: 503 });
+  }
 
-        <div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:12px;padding:16px;">
-          <h2 style="margin-top:0;">Breakdown</h2>
-<p><strong>Fuel:</strong> ${money(totalFuelCost)}</p>
-<p><strong>Insurance:</strong> ${money(totalInsurance)}</p>
-<p><strong>Road tax:</strong> ${money(totalTax)}</p>
-<p><strong>Maintenance:</strong> ${money(totalMaintenance)}</p>
-<p><strong>Depreciation:</strong> ${money(totalDepreciation)}</p>
-<p><strong>Other costs:</strong> ${money(totalMiscCosts)}</p>
-        </div>
+  const fuelType = escapeHtml(textField(body.fuelType, 32) ?? "Not specified");
+  const carType = escapeHtml(textField(body.carType, 32) ?? "Not specified");
+  const carYear = values.carYear!;
+  const annualMiles = values.annualMiles!;
+  const carValue = values.carValue!;
+  const purchaseCostLabel =
+    purchaseType === "finance" ? "Finance cash paid during period" : "Depreciation";
 
-        <hr style="margin:24px 0;border:none;border-top:1px solid #e2e8f0;" />
-
-        <p style="font-size:13px;color:#64748b;">
-          Inputs used: ${carYear}, ${fuelType}, ${carType}, ${money(carValue)} value, ${annualMiles} miles/year.
-        </p>
-
-        <p style="font-size:13px;color:#64748b;">
-          These are estimates only. Real costs may vary depending on condition, usage, market changes, insurance profile and maintenance history.
-        </p>
-
-        <p>
-          <a href="https://carcalc.app" style="color:#2563eb;">Run another calculation</a>
-        </p>
+  const html = `
+    <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;color:#0f172a;">
+      <h1>Your CarCalc breakdown</h1>
+      <p>Here is your estimated ownership cost breakdown over <strong>${values.ownershipYears} year(s)</strong>.</p>
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:16px;margin:20px 0;">
+        <h2 style="margin-top:0;">Summary</h2>
+        <p><strong>Total cost:</strong> ${money(values.totalCost!)}</p>
+        <p><strong>Monthly cost:</strong> ${money(values.monthlyCost!)}</p>
+        <p><strong>Cost per mile:</strong> £${values.costPerMile!.toFixed(2)}</p>
       </div>
-    `;
+      <div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:12px;padding:16px;">
+        <h2 style="margin-top:0;">Breakdown</h2>
+        <p><strong>Fuel:</strong> ${money(values.totalFuelCost!)}</p>
+        <p><strong>Insurance:</strong> ${money(values.totalInsurance!)}</p>
+        <p><strong>Road tax:</strong> ${money(values.totalTax!)}</p>
+        <p><strong>Maintenance:</strong> ${money(values.totalMaintenance!)}</p>
+        <p><strong>${purchaseCostLabel}:</strong> ${money(values.purchaseCost!)}</p>
+        <p><strong>Other costs:</strong> ${money(values.totalMiscCosts!)}</p>
+      </div>
+      ${purchaseType === "finance" ? "<p>Finance cash paid includes deposit, scheduled payments during the selected period, and any entered final payment due within it. The estimate does not subtract the car's end value.</p>" : ""}
+      <hr style="margin:24px 0;border:none;border-top:1px solid #e2e8f0;" />
+      <p style="font-size:13px;color:#64748b;">Inputs used: ${carYear}, ${fuelType}, ${carType}, ${money(carValue)} value, ${annualMiles} miles/year.</p>
+      <p style="font-size:13px;color:#64748b;">These are estimates only. Real costs may vary depending on condition, usage, market changes, insurance profile and maintenance history.</p>
+      <p><a href="https://carcalc.app" style="color:#2563eb;">Run another calculation</a></p>
+    </div>
+  `;
 
+  try {
+    const resend = new Resend(process.env.RESEND_API_KEY);
     const { error } = await resend.emails.send({
-from: "CarCalc <noreply@carcalc.app>",
+      from: "CarCalc <noreply@carcalc.app>",
       to: [email],
-      bcc: ["admincarcalc@gmail.com"],
       subject: "Your CarCalc ownership breakdown",
       html,
     });
 
-if (error) {
-  console.error("RESEND ERROR:", error);
-  return Response.json({ error }, { status: 500 });
-}
+    if (error) {
+      console.error("Email provider rejected breakdown request");
+      return Response.json({ error: "Could not send breakdown" }, { status: 502 });
+    }
 
     return Response.json({ success: true });
-} catch (err) {
-  console.error("EMAIL ROUTE ERROR:", err);
-  return Response.json({ error: "Something went wrong" }, { status: 500 });
-}
+  } catch {
+    console.error("Email breakdown delivery failed");
+    return Response.json({ error: "Could not send breakdown" }, { status: 502 });
+  }
 }

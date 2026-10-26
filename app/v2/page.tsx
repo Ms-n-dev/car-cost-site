@@ -9,6 +9,7 @@ import ResultsStep from "@/components/v2/ResultsStep";
 import ProgressBar from "@/components/v2/ProgressBar";
 import Link from "next/link";
 import { useOwnershipCost } from "@/hooks/useOwnershipCost";
+import { DEFAULT_FUEL_PRICES } from "@/lib/vehicleDefaults";
 
 export type PurchaseType = "cash" | "finance";
 
@@ -31,6 +32,7 @@ fuelType: "" | "petrol" | "diesel" | "premium_petrol" | "electric";
   deposit: number | "";
   monthlyPayment: number | "";
   financeTermMonths: number | "";
+  finalPayment: number | "";
 
   insurance: number | "";
   tax: number | "";
@@ -72,11 +74,7 @@ function getBrandDefaults(make?: string) {
   return BRAND_DEFAULT_COSTS[key] || BRAND_DEFAULT_COSTS.DEFAULT;
 }
 function getDefaultFuelPrice(fuelType: V2FormData["fuelType"]) {
-  if (fuelType === "diesel") return 155;
-  if (fuelType === "premium_petrol") return 165;
-  if (fuelType === "electric") return 8;
-
-  return 150;
+  return fuelType ? DEFAULT_FUEL_PRICES[fuelType] : DEFAULT_FUEL_PRICES.petrol;
 }
 const initialData: V2FormData = {
   reg: "",
@@ -96,6 +94,7 @@ fuelPrice: "",
   deposit: "",
   monthlyPayment: "",
   financeTermMonths: 36,
+  finalPayment: "",
 
   insurance: "",
   tax: "",
@@ -107,7 +106,9 @@ fuelPrice: "",
 };
 
 function n(value: number | "") {
-  return typeof value === "number" && Number.isFinite(value) ? value : 0;
+  return typeof value === "number" && Number.isFinite(value) && value > 0
+    ? value
+    : 0;
 }
 
 
@@ -156,10 +157,12 @@ if (data.purchaseType === "cash") {
 }
 
 if (data.purchaseType === "finance") {
+  const financeTerm = n(data.financeTermMonths);
   financeTotal =
     n(data.deposit) +
     n(data.monthlyPayment) *
-      Math.min(n(data.financeTermMonths), months || 0);
+      Math.min(financeTerm, months || 0) +
+    (financeTerm > 0 && financeTerm <= months ? n(data.finalPayment) : 0);
 
   purchaseCost = financeTotal;
 }
@@ -196,45 +199,39 @@ const results = {
   };
 
 const next = () => {
-  setStep((prev) => {
-    if (prev === 2) {
-      const make =
-        data.makeModel.toUpperCase().startsWith("LAND ROVER")
-          ? "LAND ROVER"
-          : data.makeModel.split(" ")[0];
+  if (step === 2) {
+    const make = data.makeModel.toUpperCase().startsWith("LAND ROVER")
+      ? "LAND ROVER"
+      : data.makeModel.split(" ")[0];
+    const brandDefaults = getBrandDefaults(make);
 
-      const brandDefaults = getBrandDefaults(make);
-setData((current) => ({
-  ...current,
-  insurance: current.insurance === "" ? brandDefaults.insurance : current.insurance,
-  servicing: current.servicing === "" ? brandDefaults.servicing : current.servicing,
-  tyres: current.tyres === "" ? brandDefaults.tyres : current.tyres,
-  repairs: current.repairs === "" ? brandDefaults.repairs : current.repairs,
-  miscCosts: current.miscCosts === "" ? brandDefaults.miscCosts : current.miscCosts,
+    setData((current) => ({
+      ...current,
+      insurance: current.insurance === "" ? brandDefaults.insurance : current.insurance,
+      servicing: current.servicing === "" ? brandDefaults.servicing : current.servicing,
+      tyres: current.tyres === "" ? brandDefaults.tyres : current.tyres,
+      repairs: current.repairs === "" ? brandDefaults.repairs : current.repairs,
+      miscCosts: current.miscCosts === "" ? brandDefaults.miscCosts : current.miscCosts,
+      efficiency:
+        current.efficiency === ""
+          ? current.fuelType === "electric"
+            ? 3.5
+            : brandDefaults.mpg
+          : current.efficiency,
+      fuelPrice:
+        current.fuelPrice === ""
+          ? getDefaultFuelPrice(current.fuelType)
+          : current.fuelPrice,
+    }));
+    setStep(3);
+    return;
+  }
 
-  efficiency:
-    current.efficiency === ""
-      ? data.fuelType === "electric"
-        ? 3.5
-        : brandDefaults.mpg
-      : current.efficiency,
-
-  fuelPrice:
-    current.fuelPrice === ""
-      ? getDefaultFuelPrice(data.fuelType)
-      : current.fuelPrice,
-}));
-
-      return 4;
-    }
-
-    return Math.min(prev + 1, 4);
-  });
+  setStep((prev) => Math.min(prev + 1, 4));
 };
 const back = () => {
   setStep((prev) => {
-    // results -> purchase
-    if (prev === 4) return 2;
+    if (prev === 4) return 3;
 
     return Math.max(prev - 1, 1);
   });

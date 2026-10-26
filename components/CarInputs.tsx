@@ -1,138 +1,142 @@
 "use client";
 import React, { useState } from "react";
 
+type FormValue = string | number | boolean | undefined;
+
 declare global {
   interface Window {
-    gtag?: (...args: any[]) => void;
+    gtag?: (...args: unknown[]) => void;
     __started?: boolean;
   }
 }
-export default function CarInputs({
+
+type CarInputsProps<T extends Record<string, FormValue>> = {
+  data: T;
+  setData: React.Dispatch<React.SetStateAction<T>>;
+  inputClass: string;
+  labelClass: string;
+  handleFuelTypeChange: (value: string) => void;
+};
+
+export default function CarInputs<T extends Record<string, FormValue>>({
   data,
   setData,
   inputClass,
   labelClass,
   handleFuelTypeChange,
-}: any) {
-
-const [showExtras, setShowExtras] = useState(false);
+}: CarInputsProps<T>) {
+  const [showExtras, setShowExtras] = useState(false);
 
   const numericFields = [
-  "carValue",
-  "currentMileage",
-  "annualMiles",
-  "efficiency",
-  "fuelPrice",
-  "insurance",
-  "tax",
-  "servicing",
-  "tyres",
-  "repairsBuffer",
-];
+    "carValue",
+    "currentMileage",
+    "annualMiles",
+    "efficiency",
+    "fuelPrice",
+    "insurance",
+    "tax",
+    "servicing",
+    "tyres",
+    "repairsBuffer",
+  ];
 
-function update(key: string, value: any) {
+  function getInputValue(value: FormValue): string | number | undefined {
+    if (value === undefined || value === null || typeof value === "boolean") {
+      return "";
+    }
 
-  // 🔥 Track first interaction
-  if (!(window as any).__started) {
-    (window as any).__started = true;
-    window.gtag?.('event', 'started_input');
+    return value === "" ? "" : value;
   }
 
-  setData((prev: any) => ({
-    ...prev,
-    [key]: numericFields.includes(key)
-      ? value === "" 
-        ? "" 
-        : Number(value)
-      : value,
-  }));
-}
+  function update(key: string, value: string | number | boolean) {
+    const win = window as Window & { __started?: boolean; gtag?: (...args: unknown[]) => void };
+
+    if (!win.__started) {
+      win.__started = true;
+      win.gtag?.("event", "started_input");
+    }
+
+    setData((prev) => ({
+      ...prev,
+      [key]: numericFields.includes(key as (typeof numericFields)[number])
+        ? value === "" ? "" : Number(value)
+        : value,
+    }));
+  }
 
   const enhancedInputClass = `${inputClass} hover:border-slate-500 transition`;
-
   const currentYear = new Date().getFullYear();
 
   return (
-    <div className="grid gap-5 md:grid-cols-2"> 
-
-      {/* VALUE */}
+    <div className="grid gap-5 md:grid-cols-2">
       <div>
         <label className={labelClass}>Car value (£)</label>
         <input
           className={enhancedInputClass}
           type="number"
-          value={data.carValue === "" ? "" : data.carValue}
+          value={getInputValue(data.carValue)}
           onChange={(e) => update("carValue", e.target.value)}
           onWheel={(e) => e.currentTarget.blur()}
         />
       </div>
 
+      <div className="relative">
+        <label className={labelClass}>Car year</label>
 
-      {/* CAR YEAR (CUSTOM DROPDOWN) */}
-<div className="relative">
-  <label className={labelClass}>Car year</label>
-
-  <button
-    onClick={() => update("carYearOpen", !data.carYearOpen)}
-    className={`${enhancedInputClass} flex justify-between items-center`}
-  >
-    <span>{data.carYear}</span>
-    <span className="text-slate-400">⌄</span>
-  </button>
-
-  {data.carYearOpen && (
-    <div className="absolute z-10 mt-2 w-full max-h-64 overflow-y-auto rounded-2xl border border-slate-200 bg-white shadow-lg">
-
-      {Array.from({ length: 30 }, (_, i) => currentYear - i).map((year) => (
-        <div
-          key={year}
-          onClick={() => {
-            update("carYear", year);
-            update("carYearOpen", false);
-          }}
-          className={`px-4 py-3 text-sm cursor-pointer hover:bg-slate-100 ${
-            data.carYear === year ? "bg-slate-100 font-medium" : ""
-          }`}
+        <button
+          onClick={() => update("carYearOpen", !data.carYearOpen)}
+          className={`${enhancedInputClass} flex items-center justify-between`}
         >
-          {year}
-        </div>
-      ))}
+          <span>{data.carYear}</span>
+          <span className="text-slate-400">⌄</span>
+        </button>
 
-    </div>
-  )}
+        {data.carYearOpen && (
+          <div className="absolute z-10 mt-2 w-full max-h-64 overflow-y-auto rounded-2xl border border-slate-200 bg-white shadow-lg">
+            {Array.from({ length: 30 }, (_, i) => currentYear - i).map((year) => (
+              <div
+                key={year}
+                onClick={() => {
+                  update("carYear", year);
+                  update("carYearOpen", false);
+                }}
+                className={`cursor-pointer px-4 py-3 text-sm hover:bg-slate-100 ${
+                  data.carYear === year ? "bg-slate-100 font-medium" : ""
+                }`}
+              >
+                {year}
+              </div>
+            ))}
+          </div>
+        )}
 
-  <div className="mt-2 text-sm text-slate-600">
-    Car age: {currentYear - data.carYear} years
-  </div>
-</div>
+        <div className="mt-2 text-sm text-slate-600">Car age: {Number(currentYear) - Number(data.carYear)} years</div>
+      </div>
 
-      {/* MILEAGE */}
       <div>
         <label className={labelClass}>Current mileage</label>
         <input
           className={enhancedInputClass}
           type="number"
-          value={data.currentMileage === "" ? "" : data.currentMileage}
+          value={getInputValue(data.currentMileage)}
           onChange={(e) => update("currentMileage", e.target.value)}
           onWheel={(e) => e.currentTarget.blur()}
         />
       </div>
 
-      {/* CAR TYPE */}
       <div className="relative">
         <label className={labelClass}>Car type</label>
 
         <button
           onClick={() => update("carTypeOpen", !data.carTypeOpen)}
-          className={`${enhancedInputClass} flex justify-between items-center`}
+          className={`${enhancedInputClass} flex items-center justify-between`}
         >
           <span className="capitalize">{data.carType}</span>
           <span className="text-slate-400">⌄</span>
         </button>
 
         {data.carTypeOpen && (
-          <div className="absolute z-10 mt-2 w-full rounded-2xl border border-slate-200 bg-white shadow-lg overflow-hidden">
-
+          <div className="absolute z-10 mt-2 w-full overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-lg">
             {["standard", "luxury", "performance"].map((option) => (
               <div
                 key={option}
@@ -140,45 +144,41 @@ function update(key: string, value: any) {
                   update("carType", option);
                   update("carTypeOpen", false);
                 }}
-                className={`px-4 py-3 text-sm cursor-pointer hover:bg-slate-100 ${
+                className={`cursor-pointer px-4 py-3 text-sm hover:bg-slate-100 ${
                   data.carType === option ? "bg-slate-100 font-medium" : ""
                 }`}
               >
                 {option.charAt(0).toUpperCase() + option.slice(1)}
               </div>
             ))}
-
           </div>
         )}
       </div>
 
-      {/* ANNUAL */}
       <div>
         <label className={labelClass}>Annual mileage</label>
         <input
           className={enhancedInputClass}
           type="number"
-            value={data.annualMiles === "" ? "" : data.annualMiles}
+          value={getInputValue(data.annualMiles)}
           onChange={(e) => update("annualMiles", e.target.value)}
           onWheel={(e) => e.currentTarget.blur()}
         />
       </div>
 
-      {/* FUEL TYPE */}
       <div className="relative">
         <label className={labelClass}>Fuel type</label>
 
         <button
           onClick={() => update("fuelTypeOpen", !data.fuelTypeOpen)}
-          className={`${enhancedInputClass} flex justify-between items-center`}
+          className={`${enhancedInputClass} flex items-center justify-between`}
         >
-          <span className="capitalize">{data.fuelType.replace("_", " ")}</span>
+          <span className="capitalize">{String(data.fuelType ?? "petrol").replace("_", " ")}</span>
           <span className="text-slate-400">⌄</span>
         </button>
 
         {data.fuelTypeOpen && (
-          <div className="absolute z-10 mt-2 w-full rounded-2xl border border-slate-200 bg-white shadow-lg overflow-hidden">
-
+          <div className="absolute z-10 mt-2 w-full overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-lg">
             {["petrol", "diesel", "premium_petrol", "electric"].map((option) => (
               <div
                 key={option}
@@ -186,57 +186,45 @@ function update(key: string, value: any) {
                   handleFuelTypeChange(option);
                   update("fuelTypeOpen", false);
                 }}
-                className={`px-4 py-3 text-sm cursor-pointer hover:bg-slate-100 ${
+                className={`cursor-pointer px-4 py-3 text-sm hover:bg-slate-100 ${
                   data.fuelType === option ? "bg-slate-100 font-medium" : ""
                 }`}
               >
-                {option.replace("_", " ").replace(/\b\w/g, (l) => l.toUpperCase())}
+                {option.replace("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase())}
               </div>
             ))}
-
           </div>
         )}
       </div>
 
-      {/* MPG */}
       <div>
-        <label className={labelClass}>
-          {data.fuelType === "electric" ? "Efficiency (mi/kWh)" : "MPG"}
-        </label>
-
+        <label className={labelClass}>{data.fuelType === "electric" ? "Efficiency (mi/kWh)" : "MPG"}</label>
         <input
           className={enhancedInputClass}
           type="number"
-            value={data.efficiency === "" ? "" : data.efficiency}
+          value={getInputValue(data.efficiency)}
           onChange={(e) => update("efficiency", e.target.value)}
           onWheel={(e) => e.currentTarget.blur()}
         />
       </div>
 
-      {/* PRICE */}
       <div>
-        <label className={labelClass}>
-          {data.fuelType === "electric"
-            ? "Electricity price (p/kWh)"
-            : "Fuel price (p/litre)"}
-        </label>
-
+        <label className={labelClass}>{data.fuelType === "electric" ? "Electricity price (p/kWh)" : "Fuel price (p/litre)"}</label>
         <input
           className={enhancedInputClass}
           type="number"
-            value={data.fuelPrice === "" ? "" : data.fuelPrice}
+          value={getInputValue(data.fuelPrice)}
           onChange={(e) => update("fuelPrice", e.target.value)}
           onWheel={(e) => e.currentTarget.blur()}
         />
       </div>
 
-      {/* COSTS */}
       <div>
         <label className={labelClass}>Insurance (£/year)</label>
         <input
           className={enhancedInputClass}
           type="number"
-            value={data.insurance === "" ? "" : data.insurance}
+          value={getInputValue(data.insurance)}
           onChange={(e) => update("insurance", e.target.value)}
           onWheel={(e) => e.currentTarget.blur()}
         />
@@ -247,7 +235,7 @@ function update(key: string, value: any) {
         <input
           className={enhancedInputClass}
           type="number"
-            value={data.tax === "" ? "" : data.tax}
+          value={getInputValue(data.tax)}
           onChange={(e) => update("tax", e.target.value)}
           onWheel={(e) => e.currentTarget.blur()}
         />
@@ -258,7 +246,7 @@ function update(key: string, value: any) {
         <input
           className={enhancedInputClass}
           type="number"
-            value={data.servicing === "" ? "" : data.servicing}
+          value={getInputValue(data.servicing)}
           onChange={(e) => update("servicing", e.target.value)}
           onWheel={(e) => e.currentTarget.blur()}
         />
@@ -269,7 +257,7 @@ function update(key: string, value: any) {
         <input
           className={enhancedInputClass}
           type="number"
-            value={data.tyres === "" ? "" : data.tyres}
+          value={getInputValue(data.tyres)}
           onChange={(e) => update("tyres", e.target.value)}
           onWheel={(e) => e.currentTarget.blur()}
         />
@@ -280,67 +268,46 @@ function update(key: string, value: any) {
         <input
           className={enhancedInputClass}
           type="number"
-            value={data.repairsBuffer === "" ? "" : data.repairsBuffer}
+          value={getInputValue(data.repairsBuffer)}
           onChange={(e) => update("repairsBuffer", e.target.value)}
           onWheel={(e) => e.currentTarget.blur()}
         />
       </div>
 
-<div className="mt-4">
+      <div className="mt-4">
+        <button
+          onClick={() => setShowExtras(!showExtras)}
+          className="flex items-center gap-2 text-sm text-slate-600 transition hover:text-slate-900"
+        >
+          <span>{showExtras ? "Hide additional costs" : "Add additional costs"}</span>
+          <svg
+            className={`h-4 w-4 transition-transform duration-200 ${showExtras ? "rotate-180" : ""}`}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
 
-<button
-  onClick={() => setShowExtras(!showExtras)}
-  className="flex items-center gap-2 text-sm text-slate-600 hover:text-slate-900 transition"
->
-  <span>
-    {showExtras ? "Hide additional costs" : "Add additional costs"}
-  </span>
-
-  <svg
-    className={`w-4 h-4 transition-transform duration-200 ${
-      showExtras ? "rotate-180" : ""
-    }`}
-    fill="none"
-    stroke="currentColor"
-    viewBox="0 0 24 24"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M19 9l-7 7-7-7"
-    />
-  </svg>
-</button>
-
-  {showExtras && (
-    <div className="mt-3">
-      <label className={labelClass}>
-        Additional costs (£/year)
-      </label>
-
-      <input
-        type="number"
-        className={inputClass}
-        value={data.miscCosts || ""}
-        onChange={(e) =>
-          setData((prev: any) => ({
-            ...prev,
-            miscCosts: e.target.value === "" ? "" : +e.target.value,
-          }))
-        }
-      />
-
-      <div className="mt-1 text-xs text-slate-400">
-        Breakdown cover, warranty, parking, ULEZ, etc.
+        {showExtras && (
+          <div className="mt-3">
+            <label className={labelClass}>Additional costs (£/year)</label>
+            <input
+              type="number"
+              className={inputClass}
+              value={getInputValue(data.miscCosts)}
+              onChange={(e) =>
+                setData((prev) => ({
+                  ...prev,
+                  miscCosts: e.target.value === "" ? "" : Number(e.target.value),
+                }))
+              }
+            />
+            <div className="mt-1 text-xs text-slate-400">Breakdown cover, warranty, parking, ULEZ, etc.</div>
+          </div>
+        )}
       </div>
-    </div>
-  )}
-
-</div>
-
-      
-
     </div>
   );
 }

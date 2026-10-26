@@ -53,9 +53,10 @@ export default function PrivacyPage() {
 
           <p>
             CarCalc uses analytics tools including Google Analytics and
-            Microsoft Clarity to understand how visitors use the site.
-            These services may use cookies and collect anonymised usage
-            data.
+            Microsoft Clarity to understand how visitors use the site. These
+            optional tools, including Vercel Analytics, are loaded only after
+            you accept optional analytics. You can change your choice using
+            Privacy settings at the bottom of the page.
           </p>
         </section>
 
@@ -65,9 +66,9 @@ export default function PrivacyPage() {
           </h2>
 
           <p>
-            We do not sell your personal information. Information may be
-            shared with finance providers if you explicitly request finance
-            quotes through the platform.
+            We do not sell your personal information. Finance enquiry details
+            submitted through the site are sent to the CarCalc team inbox; the
+            current site does not send them to a finance provider.
           </p>
         </section>
 

@@ -5,6 +5,8 @@ import { trackEvent } from "@/lib/gtag";
 type Results = {
   totalCost: number;
   monthlyCost: number;
+  purchaseCost: number;
+  financeTotal: number;
   runningCosts: number;
   totalDepreciation: number;
   insuranceTotal: number;
@@ -36,10 +38,8 @@ export default function EmailBreakdownModal({
 
   async function sendBreakdown() {
     setSending(true);
-
-    const [make, model] = (data.makeModel || "").split(" | ");
-
-const res = await fetch("/api/email-breakdown", {
+    try {
+      const res = await fetch("/api/email-breakdown", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -53,13 +53,18 @@ body: JSON.stringify({
   monthlyCost: results.monthlyCost,
 
   costPerMile:
-    results.totalCost /
-Math.max((Number(data.annualMiles) || 0) * (Number(data.ownershipYears) || 3), 1),
+    Number(data.annualMiles) > 0
+      ? results.totalCost /
+        (Number(data.annualMiles) * (Number(data.ownershipYears) || 3))
+      : 0,
 
+  purchaseType: data.purchaseType,
+  purchaseCost: results.purchaseCost,
   totalFuelCost: results.fuelTotal,
   totalInsurance: results.insuranceTotal,
   totalTax: results.taxTotal,
-  totalDepreciation: results.totalDepreciation,
+  totalDepreciation:
+    data.purchaseType === "cash" ? results.totalDepreciation : 0,
   totalMaintenance:
   results.servicingTotal + results.tyresTotal + results.repairsTotal,
 
@@ -71,17 +76,21 @@ totalMiscCosts: results.miscTotal,
   fuelType: data.fuelType,
   carType: "standard",
 }),
-    });
+      });
 
-    setSending(false);
+      if (!res.ok) {
+        alert("Could not send breakdown. Please try again.");
+        return;
+      }
 
-    if (!res.ok) {
-      alert("Could not send breakdown. Please try again.");
-      return;
+      trackEvent("submitted_email_breakdown");
+      alert("Breakdown sent — check your inbox.");
+      onClose();
+    } catch {
+      alert("Could not send breakdown. Check your connection and try again.");
+    } finally {
+      setSending(false);
     }
-trackEvent("submitted_email_breakdown");
-    alert("Breakdown sent — check your inbox.");
-    onClose();
   }
 
   return (
@@ -115,6 +124,8 @@ trackEvent("submitted_email_breakdown");
         <input
           value={email}
           type="email"
+          required
+          aria-label="Email address"
           onChange={(e) => setEmail(e.target.value)}
           placeholder="Email address"
           className="w-full rounded-2xl border border-slate-200 px-4 py-4 outline-none transition-all duration-200 focus:border-slate-950 focus:ring-4 focus:ring-slate-950/10"
