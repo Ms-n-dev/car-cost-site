@@ -5,13 +5,9 @@ export default function HowItWorksPage() {
     <main className="min-h-screen bg-[#f8fafc] px-4 py-8 text-slate-950">
       <div className="mx-auto max-w-5xl">
         <header className="flex items-center justify-between py-4">
-          <Link href="/" className="text-xl font-semibold tracking-tight">
-            CarCalc
-          </Link>
-
           <Link
             href="/"
-            className="rounded-full bg-slate-950 px-5 py-2.5 text-sm font-semibold text-white"
+            className="ml-auto rounded-full bg-slate-950 px-5 py-2.5 text-sm font-semibold text-white"
           >
             Try calculator
           </Link>

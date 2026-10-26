@@ -247,11 +247,7 @@ const back = () => {
 
 <div className="mx-auto flex min-h-[calc(100vh-3rem)] max-w-5xl flex-col">
 
-  <header className="mx-auto flex w-full max-w-6xl items-center justify-between py-4">
-    <div className="text-xl font-semibold tracking-tight text-slate-950">
-      CarCalc
-    </div>
-
+  <header className="mx-auto flex w-full max-w-6xl items-center justify-end py-4">
 <nav className="flex items-center gap-3 text-xs font-medium text-slate-500 sm:gap-4 sm:text-sm">
   <Link href="/compare" className="transition hover:text-slate-950">
     Compare
