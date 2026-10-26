@@ -58,7 +58,7 @@ const topRef = useRef<HTMLDivElement | null>(null);
 
 useEffect(() => {
   trackCalculatorCompleted({
-    calculatorStep: 4,
+    calculatorStep: 3,
     purchaseMethod: data.purchaseType || undefined,
     ownershipYears: Number(data.ownershipYears) || undefined,
   });
@@ -172,11 +172,14 @@ useEffect(() => {
 
         <div className="mt-4 rounded-2xl border border-white/10 bg-white/10 p-4">
           <p className="text-sm font-medium text-white">
-            Using illustrative running-cost defaults
+            Using estimated vehicle data
           </p>
 
           <p className="mt-1 text-sm text-slate-300">
-            Defaults are not live quotes or a market valuation. Replace them with your own insurance, tax and maintenance figures below.
+            {data.fuelType === "electric"
+              ? `Estimated electric efficiency: ${data.efficiency} mi/kWh at ${data.fuelPrice}p/kWh.`
+              : `Estimated ${data.fuelType || "fuel"} efficiency: ${data.efficiency} mpg at ${data.fuelPrice}p/litre.`}{" "}
+            These are estimates, not live quotes. You can refine them below.
           </p>
         </div>
       </div>
@@ -377,6 +380,59 @@ onClick={() => {
           <div className="mt-6 grid gap-4 sm:grid-cols-2">
             <div>
               <label className="text-sm font-medium text-slate-700">
+                Car value (£)
+              </label>
+              <input
+                type="number"
+                min="0"
+                value={data.carValue}
+                onChange={(e) =>
+                  updateData({
+                    carValue: e.target.value === "" ? "" : Number(e.target.value),
+                  })
+                }
+                className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3"
+              />
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-slate-700">
+                Car year
+              </label>
+              <input
+                type="number"
+                min="1900"
+                max={new Date().getFullYear()}
+                value={data.carYear}
+                onChange={(e) =>
+                  updateData({
+                    carYear: e.target.value === "" ? "" : Number(e.target.value),
+                  })
+                }
+                className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3"
+              />
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-slate-700">
+                Current mileage
+              </label>
+              <input
+                type="number"
+                min="0"
+                value={data.currentMileage}
+                onChange={(e) =>
+                  updateData({
+                    currentMileage:
+                      e.target.value === "" ? "" : Number(e.target.value),
+                  })
+                }
+                className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3"
+              />
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-slate-700">
                 Insurance per year
               </label>
 
@@ -523,7 +579,7 @@ onClick={() => {
   type="button"
   onClick={() => {
   trackCalculatorRecalculated({
-    calculatorStep: 4,
+    calculatorStep: 3,
     purchaseMethod: data.purchaseType || undefined,
     ownershipYears: Number(data.ownershipYears) || undefined,
   });

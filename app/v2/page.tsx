@@ -4,13 +4,16 @@ import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import VehicleStep from "../../components/v2/VehicleStep";
 import PurchaseStep from "@/components/v2/PurchaseStep";
-import CostsStep from "@/components/v2/CostsStep";
 import ResultsStep from "@/components/v2/ResultsStep";
 import ProgressBar from "@/components/v2/ProgressBar";
 import Link from "next/link";
 import { useOwnershipCost } from "@/hooks/useOwnershipCost";
-import { DEFAULT_FUEL_PRICES } from "@/lib/vehicleDefaults";
 import { resetCalculatorAttempt, trackCalculatorStepReached } from "@/lib/gtag";
+import {
+  getVehicleEstimate,
+  type FuelType,
+  type VehicleClass,
+} from "@/lib/vehicleEstimates";
 
 export type PurchaseType = "cash" | "finance";
 
@@ -26,7 +29,8 @@ export type V2FormData = {
   annualMiles: number | "";
 ownershipYears: number | "";
 
-fuelType: "" | "petrol" | "diesel" | "premium_petrol" | "electric";
+  fuelType: FuelType | "";
+  carType: VehicleClass;
   efficiency: number | "";
   fuelPrice: number | "";
 
@@ -42,41 +46,6 @@ fuelType: "" | "petrol" | "diesel" | "premium_petrol" | "electric";
   repairs: number | "";
   miscCosts: number | "";
 };
-const BRAND_DEFAULT_COSTS: Record<string, {
-  insurance: number;
-  servicing: number;
-  tyres: number;
-  repairs: number;
-  miscCosts: number;
-  mpg: number;
-}> = {
-BMW: { insurance: 1200, servicing: 650, tyres: 400, repairs: 500, miscCosts: 0, mpg: 38 },
-AUDI: { insurance: 1150, servicing: 600, tyres: 380, repairs: 450, miscCosts: 0, mpg: 40 },
-MERCEDES: { insurance: 1200, servicing: 650, tyres: 400, repairs: 500, miscCosts: 0, mpg: 39 },
-VOLKSWAGEN: { insurance: 900, servicing: 450, tyres: 300, repairs: 350, miscCosts: 0, mpg: 45 },
-FORD: { insurance: 800, servicing: 400, tyres: 280, repairs: 300, miscCosts: 0, mpg: 44 },
-VAUXHALL: { insurance: 750, servicing: 380, tyres: 260, repairs: 300, miscCosts: 0, mpg: 44 },
-TOYOTA: { insurance: 750, servicing: 350, tyres: 250, repairs: 250, miscCosts: 0, mpg: 50 },
-HONDA: { insurance: 800, servicing: 380, tyres: 260, repairs: 280, miscCosts: 0, mpg: 47 },
-HYUNDAI: { insurance: 700, servicing: 350, tyres: 240, repairs: 250, miscCosts: 0, mpg: 47 },
-KIA: { insurance: 700, servicing: 350, tyres: 240, repairs: 250, miscCosts: 0, mpg: 47 },
-NISSAN: { insurance: 750, servicing: 380, tyres: 260, repairs: 300, miscCosts: 0, mpg: 45 },
-PEUGEOT: { insurance: 750, servicing: 380, tyres: 260, repairs: 300, miscCosts: 0, mpg: 50 },
-RENAULT: { insurance: 750, servicing: 380, tyres: 260, repairs: 300, miscCosts: 0, mpg: 48 },
-LAND_ROVER: { insurance: 1500, servicing: 900, tyres: 600, repairs: 900, miscCosts: 0, mpg: 30 },
-PORSCHE: { insurance: 1800, servicing: 1200, tyres: 800, repairs: 1000, miscCosts: 0, mpg: 25 },
-DEFAULT: { insurance: 900, servicing: 450, tyres: 300, repairs: 350, miscCosts: 0, mpg: 42 },
-};
-function getBrandDefaults(make?: string) {
-  const key = (make || "")
-    .toUpperCase()
-    .replace(/\s+/g, "_");
-
-  return BRAND_DEFAULT_COSTS[key] || BRAND_DEFAULT_COSTS.DEFAULT;
-}
-function getDefaultFuelPrice(fuelType: V2FormData["fuelType"]) {
-  return fuelType ? DEFAULT_FUEL_PRICES[fuelType] : DEFAULT_FUEL_PRICES.petrol;
-}
 const initialData: V2FormData = {
   reg: "",
   makeModel: "",
@@ -89,6 +58,7 @@ const initialData: V2FormData = {
   ownershipYears: 3,
 
 fuelType: "",
+carType: "standard",
 efficiency: "",
 fuelPrice: "",
 
@@ -132,7 +102,7 @@ const ownership = useOwnershipCost({
   carAge,
   annualMiles: data.annualMiles,
   currentMileage: data.currentMileage,
-  carType: "standard",
+  carType: data.carType,
   fuelType: data.fuelType,
   efficiency: data.efficiency,
   fuelPrice: data.fuelPrice,
@@ -201,42 +171,40 @@ const results = {
 
 const next = () => {
   if (step === 2) {
-    const make = data.makeModel.toUpperCase().startsWith("LAND ROVER")
-      ? "LAND ROVER"
-      : data.makeModel.split(" ")[0];
-    const brandDefaults = getBrandDefaults(make);
+    const [make = "", model = ""] = data.makeModel.split(" | ");
+    const estimate = getVehicleEstimate(make, model, data.fuelType);
 
     setData((current) => ({
       ...current,
-      insurance: current.insurance === "" ? brandDefaults.insurance : current.insurance,
-      servicing: current.servicing === "" ? brandDefaults.servicing : current.servicing,
-      tyres: current.tyres === "" ? brandDefaults.tyres : current.tyres,
-      repairs: current.repairs === "" ? brandDefaults.repairs : current.repairs,
-      miscCosts: current.miscCosts === "" ? brandDefaults.miscCosts : current.miscCosts,
-      efficiency:
-        current.efficiency === ""
-          ? current.fuelType === "electric"
-            ? 3.5
-            : brandDefaults.mpg
-          : current.efficiency,
-      fuelPrice:
-        current.fuelPrice === ""
-          ? getDefaultFuelPrice(current.fuelType)
-          : current.fuelPrice,
+      fuelType: current.fuelType || estimate.fuelType,
+      carType: estimate.carType,
+      efficiency: current.efficiency === "" ? estimate.efficiency : current.efficiency,
+      fuelPrice: current.fuelPrice === "" ? estimate.fuelPrice : current.fuelPrice,
+      carValue:
+        current.carValue === "" && estimate.carValue !== undefined
+          ? estimate.carValue
+          : current.carValue,
+      currentMileage:
+        current.currentMileage === "" ? estimate.currentMileage : current.currentMileage,
+      insurance: current.insurance === "" ? estimate.insurance : current.insurance,
+      tax: current.tax === "" ? estimate.tax : current.tax,
+      servicing: current.servicing === "" ? estimate.servicing : current.servicing,
+      tyres: current.tyres === "" ? estimate.tyres : current.tyres,
+      repairs: current.repairs === "" ? estimate.repairs : current.repairs,
     }));
     trackCalculatorStepReached(3);
     setStep(3);
     return;
   }
 
-  if (step < 4) {
+  if (step < 3) {
     trackCalculatorStepReached(step + 1);
     setStep(step + 1);
   }
 };
 const back = () => {
   setStep((prev) => {
-    if (prev === 4) return 3;
+    if (prev === 3) return 2;
 
     return Math.max(prev - 1, 1);
   });
@@ -298,15 +266,6 @@ const back = () => {
               )}
 
               {step === 3 && (
-                <CostsStep
-                  data={data}
-                  updateData={updateData}
-                  next={next}
-                  back={back}
-                />
-              )}
-
-              {step === 4 && (
 <ResultsStep
   data={data}
   results={results}

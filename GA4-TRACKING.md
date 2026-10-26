@@ -14,8 +14,8 @@ A non-identifying random `attempt_id` groups calculator events for one attempt. 
 | `landing_page_viewed` | First consented route view in a tab session | `page_path` |
 | `calculator_started` | First meaningful calculator interaction per attempt | `attempt_id`, `calculator_type`, `calculator_step` |
 | `calculator_step_reached` | User explicitly advances to a wizard step; once per step per attempt | `attempt_id`, `calculator_type`, `calculator_step` |
-| `calculator_completed` | First results display after a started attempt | `attempt_id`, `calculator_type`, `calculator_step`, `purchase_method`, `ownership_years` |
-| `calculator_recalculated` | User explicitly presses “Recalculate result” on v2 results | `attempt_id`, `calculator_type`, `calculator_step`, `purchase_method`, `ownership_years` |
+| `calculator_completed` | First results display immediately after buying method, step 3, after a started attempt | `attempt_id`, `calculator_type`, `calculator_step`, `purchase_method`, `ownership_years` |
+| `calculator_recalculated` | User explicitly presses “Recalculate result” on step-3 results | `attempt_id`, `calculator_type`, `calculator_step`, `purchase_method`, `ownership_years` |
 | `results_cta_clicked` | One deliberate results action click | `attempt_id`, `calculator_type`, `cta_type` |
 | `lead_submitted` | Only after a lead/email endpoint returns success | `attempt_id`, `calculator_type`, `lead_type` |
 | `reg_lookup_success` | DVLA lookup succeeds, once per registration per mounted vehicle step | `fuel_type`, `make` |

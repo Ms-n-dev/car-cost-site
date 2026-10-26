@@ -3,22 +3,13 @@ import StepLayout from "./StepLayout";
 import type { V2FormData } from "@/app/v2/page";
 import { carMakes } from "@/data/carData";
 import { trackCalculatorStarted, trackEvent } from "@/lib/gtag";
+import { getVehicleEstimate } from "@/lib/vehicleEstimates";
 
 type Props = {
   data: V2FormData;
   updateData: (patch: Partial<V2FormData>) => void;
   next: () => void;
 };
-
-function mapDvlaFuelType(fuelType?: string): V2FormData["fuelType"] {
-  const value = fuelType?.toLowerCase() || "";
-
-  if (value.includes("diesel")) return "diesel";
-  if (value.includes("electric")) return "electric";
-  if (value.includes("petrol")) return "petrol";
-
-  return "";
-}
 
 export default function VehicleStep({ data, updateData, next }: Props) {
   const [lookupLoading, setLookupLoading] = useState(false);
@@ -29,13 +20,38 @@ export default function VehicleStep({ data, updateData, next }: Props) {
   const selectedMake = data.makeModel.split(" | ")[0] || "";
   const selectedModel = data.makeModel.split(" | ")[1] || "";
 
-  const canContinue =
-    data.reg.trim() !== "" || (selectedMake !== "" && selectedModel !== "");
+  const hasManualVehicle = selectedMake !== "" && selectedModel !== "";
+  const hasResolvedRegistration =
+    data.reg.trim() !== "" && lookupSuccess !== "" && data.fuelType !== "";
+  const canContinue = hasManualVehicle || hasResolvedRegistration;
+
+  function setVehicleEstimate(
+    make: string,
+    model: string,
+    dvlaFuelType?: string,
+    carValue?: number
+  ) {
+    const estimate = getVehicleEstimate(make, model, dvlaFuelType);
+
+    updateData({
+      fuelType: estimate.fuelType,
+      carType: estimate.carType,
+      efficiency: estimate.efficiency,
+      fuelPrice: estimate.fuelPrice,
+      carValue: carValue ?? estimate.carValue,
+      currentMileage: estimate.currentMileage,
+      insurance: estimate.insurance,
+      tax: estimate.tax,
+      servicing: estimate.servicing,
+      tyres: estimate.tyres,
+      repairs: estimate.repairs,
+    });
+  }
 
   async function lookupReg() {
     const registration = data.reg.replace(/\s/g, "").toUpperCase();
     if (!registration || lookupInFlight.current) return;
-    if (lastSuccessfulRegistration.current === registration) return;
+    if (lastSuccessfulRegistration.current === registration && lookupSuccess) return;
 
     lookupInFlight.current = true;
     trackCalculatorStarted("single", 1);
@@ -81,11 +97,14 @@ const matchedMake =
   makeAliases[dvlaMake] ||
   "";
 
+      const estimateMake = matchedMake || String(vehicle.make || selectedMake);
+      const estimateModel = selectedModel;
+      setVehicleEstimate(estimateMake, estimateModel, vehicle.fuelType);
+
 updateData({
   reg: registration,
-  makeModel: matchedMake ? `${matchedMake} | ` : data.makeModel,
+  makeModel: estimateMake ? `${estimateMake} | ${estimateModel}` : data.makeModel,
   carYear: year || data.carYear,
-  fuelType: mapDvlaFuelType(vehicle.fuelType),
 });
 
 setLookupSuccess(
@@ -126,9 +145,16 @@ trackEvent("reg_lookup_success", {
   value={data.reg}
 onChange={(e) => {
   trackCalculatorStarted("single", 1);
-
+  const value = e.target.value.toUpperCase();
+  const changedRegistration =
+    value.replace(/\s/g, "") !== data.reg.replace(/\s/g, "");
+  if (changedRegistration) {
+    setLookupSuccess("");
+    setLookupError("");
+  }
   updateData({
-    reg: e.target.value.toUpperCase(),
+    reg: value,
+    ...(changedRegistration ? { makeModel: "", fuelType: "" } : {}),
   });
 }}
   onBlur={lookupReg}
@@ -174,8 +200,11 @@ onChange={(e) => {
               value={selectedMake}
               onChange={(e) => {
                 trackCalculatorStarted("single", 1);
+                const make = e.target.value;
+                const model = "";
+                setVehicleEstimate(make, model);
                 updateData({
-                  makeModel: e.target.value ? `${e.target.value} | ` : "",
+                  makeModel: make ? `${make} | ` : "",
                 });
               }}
               className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-4 text-base outline-none transition-all duration-200 focus:border-slate-950 focus:ring-4 focus:ring-slate-950/10"
@@ -201,9 +230,12 @@ onChange={(e) => {
               onChange={(e) => {
                 trackCalculatorStarted("single", 1);
                 const make = selectedMake;
+                const model = e.target.value;
+                const estimate = getVehicleEstimate(make, model);
+                setVehicleEstimate(make, model, undefined, estimate.carValue);
 
                 updateData({
-                  makeModel: `${make} | ${e.target.value}`,
+                  makeModel: `${make} | ${model}`,
                 });
               }}
               className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-4 text-base outline-none transition-all duration-200 focus:border-slate-950 focus:ring-4 focus:ring-slate-950/10 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
@@ -243,7 +275,7 @@ onChange={(e) => {
 
 
         <button
-          disabled={!canContinue}
+          disabled={!canContinue || lookupLoading}
           onClick={next}
           className="w-full rounded-2xl bg-slate-950 px-5 py-4 text-base font-semibold text-white disabled:opacity-40"
         >
