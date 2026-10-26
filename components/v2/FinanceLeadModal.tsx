@@ -1,7 +1,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import type { V2FormData } from "@/app/v2/page";
-import { trackEvent } from "@/lib/gtag";
+import { trackSuccessfulLeadSubmission } from "@/lib/gtag";
 
 type Results = {
   totalCost: number;
@@ -86,10 +86,7 @@ if (!res.ok) {
 }
 
 
-trackEvent("submitted_finance_lead", {
-  purchase_type: data.purchaseType,
-  ownership_years: data.ownershipYears,
-});
+trackSuccessfulLeadSubmission(true, "finance_inquiry");
 
 alert("Your enquiry has been sent to the CarCalc team.");
 onClose();

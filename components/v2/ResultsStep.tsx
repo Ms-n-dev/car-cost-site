@@ -3,7 +3,14 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import FinanceLeadModal from "./FinanceLeadModal";
 import EmailBreakdownModal from "./EmailBreakdownModal";
-import { trackEvent } from "@/lib/gtag";
+import AffiliateLeadModal from "./AffiliateLeadModal";
+import {
+  trackCalculatorCompleted,
+  trackCalculatorRecalculated,
+  trackEvent,
+  resetCalculatorAttempt,
+  trackResultsCtaClicked,
+} from "@/lib/gtag";
 type Props = {
   data: V2FormData;
   updateData: (patch: Partial<V2FormData>) => void;
@@ -45,25 +52,20 @@ export default function ResultsStep({
   const carName = data.reg || data.makeModel || "This car";
   const [financeModalOpen, setFinanceModalOpen] = useState(false);
 const [emailModalOpen, setEmailModalOpen] = useState(false);
+const [affiliateService, setAffiliateService] = useState<"insurance" | "warranty" | null>(null);
 const [showAccuracyInputs, setShowAccuracyInputs] = useState(false);
-const hasTrackedResults = useRef(false);
 const topRef = useRef<HTMLDivElement | null>(null);
 
 useEffect(() => {
-  if (hasTrackedResults.current) return;
-
-  hasTrackedResults.current = true;
-
-  trackEvent("viewed_results", {
-    ownership_years: data.ownershipYears,
-    purchase_type: data.purchaseType,
-    total_cost: Math.round(results.totalCost),
-    monthly_cost: Math.round(results.monthlyCost),
+  trackCalculatorCompleted({
+    calculatorStep: 4,
+    purchaseMethod: data.purchaseType || undefined,
+    ownershipYears: Number(data.ownershipYears) || undefined,
   });
-}, [data.ownershipYears, data.purchaseType, results.monthlyCost, results.totalCost]);
+}, [data.ownershipYears, data.purchaseType]);
 
 useEffect(() => {
-  const modalOpen = financeModalOpen || emailModalOpen;
+  const modalOpen = financeModalOpen || emailModalOpen || affiliateService !== null;
 
   if (!modalOpen) {
     document.body.style.overflow = "";
@@ -75,7 +77,7 @@ useEffect(() => {
   return () => {
     document.body.style.overflow = "";
   };
-}, [financeModalOpen, emailModalOpen]);
+}, [affiliateService, financeModalOpen, emailModalOpen]);
 
 
   return (
@@ -256,7 +258,7 @@ useEffect(() => {
 <button
   type="button"
 onClick={() => {
-  trackEvent("clicked_finance_cta");
+  trackResultsCtaClicked("finance_inquiry");
   setFinanceModalOpen(true);
 }}
   className="rounded-2xl bg-slate-950 px-5 py-4 font-semibold text-white"
@@ -267,7 +269,7 @@ onClick={() => {
 <button
   type="button"
 onClick={() => {
-  trackEvent("clicked_email_cta");
+  trackResultsCtaClicked("email_breakdown");
   setEmailModalOpen(true);
 }}
   className="rounded-2xl border border-slate-200 bg-white px-5 py-4 font-semibold text-slate-800"
@@ -275,9 +277,33 @@ onClick={() => {
   Email me this breakdown
 </button>
 
+<button
+  type="button"
+  onClick={() => {
+    trackResultsCtaClicked("insurance_enquiry");
+    setAffiliateService("insurance");
+  }}
+  className="rounded-2xl border border-slate-200 bg-white px-5 py-4 font-semibold text-slate-800"
+>
+  Ask about insurance
+</button>
+
+<button
+  type="button"
+  onClick={() => {
+    trackResultsCtaClicked("warranty_enquiry");
+    setAffiliateService("warranty");
+  }}
+  className="rounded-2xl border border-slate-200 bg-white px-5 py-4 font-semibold text-slate-800"
+>
+  Ask about a warranty
+</button>
+
             <Link
               href="/compare"
               onClick={() => {
+                trackResultsCtaClicked("compare_another_car");
+                resetCalculatorAttempt();
                 const [make, model] = data.makeModel.split(" | ");
                 const comparisonCar = {
                   name: [make, model].filter(Boolean).join(" ") || data.reg || "Car 1",
@@ -310,6 +336,7 @@ onClick={() => {
 
             <Link
               href="/cost-to-own"
+              onClick={() => trackResultsCtaClicked("ownership_guides")}
               className="rounded-2xl border border-slate-200 bg-white px-5 py-4 text-center font-semibold text-slate-800"
             >
               Browse ownership guides
@@ -495,11 +522,10 @@ onClick={() => {
 <button
   type="button"
   onClick={() => {
-  trackEvent("clicked_recalculate_result", {
-    ownership_years: data.ownershipYears,
-    purchase_type: data.purchaseType,
-    total_cost: Math.round(results.totalCost),
-    monthly_cost: Math.round(results.monthlyCost),
+  trackCalculatorRecalculated({
+    calculatorStep: 4,
+    purchaseMethod: data.purchaseType || undefined,
+    ownershipYears: Number(data.ownershipYears) || undefined,
   });
 
   setShowAccuracyInputs(false);
@@ -546,6 +572,15 @@ className="mt-2 rounded-2xl bg-slate-950 px-5 py-4 font-semibold text-white sm:c
   data={data}
   results={results}
 />
+
+{affiliateService && (
+  <AffiliateLeadModal
+    open={true}
+    service={affiliateService}
+    data={data}
+    onClose={() => setAffiliateService(null)}
+  />
+)}
 
     </section>
   );

@@ -24,7 +24,8 @@ export default function PrivacyPage() {
             <li>Email address</li>
             <li>Phone number</li>
             <li>Vehicle information</li>
-            <li>Finance enquiry information</li>
+            <li>Finance, insurance and warranty enquiry information</li>
+            <li>Postcode, when supplied for an insurance enquiry</li>
           </ul>
         </section>
 
@@ -66,9 +67,9 @@ export default function PrivacyPage() {
           </h2>
 
           <p>
-            We do not sell your personal information. Finance enquiry details
-            submitted through the site are sent to the CarCalc team inbox; the
-            current site does not send them to a finance provider.
+            We do not sell your personal information. Finance, insurance and
+            warranty enquiry details submitted through the site are sent to the
+            CarCalc team inbox; the current site does not send them to a provider.
           </p>
         </section>
 

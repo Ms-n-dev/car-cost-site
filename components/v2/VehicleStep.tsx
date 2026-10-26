@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import StepLayout from "./StepLayout";
 import type { V2FormData } from "@/app/v2/page";
 import { carMakes } from "@/data/carData";
-import { trackEvent } from "@/lib/gtag";
+import { trackCalculatorStarted, trackEvent } from "@/lib/gtag";
 
 type Props = {
   data: V2FormData;
@@ -24,8 +24,8 @@ export default function VehicleStep({ data, updateData, next }: Props) {
   const [lookupLoading, setLookupLoading] = useState(false);
   const [lookupError, setLookupError] = useState("");
   const [lookupSuccess, setLookupSuccess] = useState("");
-  const hasStartedInput = useRef(false);
-
+  const lookupInFlight = useRef(false);
+  const lastSuccessfulRegistration = useRef<string | null>(null);
   const selectedMake = data.makeModel.split(" | ")[0] || "";
   const selectedModel = data.makeModel.split(" | ")[1] || "";
 
@@ -33,7 +33,12 @@ export default function VehicleStep({ data, updateData, next }: Props) {
     data.reg.trim() !== "" || (selectedMake !== "" && selectedModel !== "");
 
   async function lookupReg() {
-    if (!data.reg.trim()) return;
+    const registration = data.reg.replace(/\s/g, "").toUpperCase();
+    if (!registration || lookupInFlight.current) return;
+    if (lastSuccessfulRegistration.current === registration) return;
+
+    lookupInFlight.current = true;
+    trackCalculatorStarted("single", 1);
 
     setLookupLoading(true);
     setLookupError("");
@@ -77,7 +82,7 @@ const matchedMake =
   "";
 
 updateData({
-  reg: data.reg.replace(/\s/g, "").toUpperCase(),
+  reg: registration,
   makeModel: matchedMake ? `${matchedMake} | ` : data.makeModel,
   carYear: year || data.carYear,
   fuelType: mapDvlaFuelType(vehicle.fuelType),
@@ -88,6 +93,7 @@ setLookupSuccess(
     year ? `, ${year}` : ""
   }`
 );
+lastSuccessfulRegistration.current = registration;
 
 trackEvent("reg_lookup_success", {
   fuel_type: vehicle.fuelType || "",
@@ -99,6 +105,7 @@ trackEvent("reg_lookup_success", {
       setLookupSuccess("");
       setLookupError("Could not find that reg. You can still enter the car manually.");
     } finally {
+      lookupInFlight.current = false;
       setLookupLoading(false);
     }
   }
@@ -118,10 +125,7 @@ trackEvent("reg_lookup_success", {
     <input
   value={data.reg}
 onChange={(e) => {
-  if (!hasStartedInput.current) {
-    hasStartedInput.current = true;
-    trackEvent("started_input");
-  }
+  trackCalculatorStarted("single", 1);
 
   updateData({
     reg: e.target.value.toUpperCase(),
@@ -168,11 +172,12 @@ onChange={(e) => {
 
             <select
               value={selectedMake}
-              onChange={(e) =>
+              onChange={(e) => {
+                trackCalculatorStarted("single", 1);
                 updateData({
                   makeModel: e.target.value ? `${e.target.value} | ` : "",
-                })
-              }
+                });
+              }}
               className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-4 text-base outline-none transition-all duration-200 focus:border-slate-950 focus:ring-4 focus:ring-slate-950/10"
             >
               <option value="">Select make</option>
@@ -194,6 +199,7 @@ onChange={(e) => {
               value={selectedModel}
               disabled={!selectedMake}
               onChange={(e) => {
+                trackCalculatorStarted("single", 1);
                 const make = selectedMake;
 
                 updateData({
@@ -222,10 +228,13 @@ onChange={(e) => {
     type="number"
     value={data.carYear}
     onChange={(e) =>
-      updateData({
+      {
+        trackCalculatorStarted("single", 1);
+        updateData({
         carYear:
           e.target.value === "" ? "" : Number(e.target.value),
-      })
+        });
+      }
     }
     placeholder="2019"
     className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-4 text-base outline-none transition-all duration-200 focus:border-slate-950 focus:ring-4 focus:ring-slate-950/10"

@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "node --experimental-strip-types --test lib/CalculateCarCosts.test.mjs lib/requestValidation.test.mjs"
+    "test": "node --experimental-strip-types --test lib/CalculateCarCosts.test.mjs lib/requestValidation.test.mjs lib/gtag.test.mjs"
   },
   "dependencies": {
     "@vercel/analytics": "^2.0.1",

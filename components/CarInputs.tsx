@@ -1,14 +1,11 @@
 "use client";
 import React, { useState } from "react";
+import {
+  trackCalculatorStarted,
+  type CalculatorType,
+} from "@/lib/gtag";
 
 type FormValue = string | number | boolean | undefined;
-
-declare global {
-  interface Window {
-    gtag?: (...args: unknown[]) => void;
-    __started?: boolean;
-  }
-}
 
 type CarInputsProps<T extends Record<string, FormValue>> = {
   data: T;
@@ -16,6 +13,7 @@ type CarInputsProps<T extends Record<string, FormValue>> = {
   inputClass: string;
   labelClass: string;
   handleFuelTypeChange: (value: string) => void;
+  calculatorType?: CalculatorType;
 };
 
 export default function CarInputs<T extends Record<string, FormValue>>({
@@ -24,6 +22,7 @@ export default function CarInputs<T extends Record<string, FormValue>>({
   inputClass,
   labelClass,
   handleFuelTypeChange,
+  calculatorType = "single",
 }: CarInputsProps<T>) {
   const [showExtras, setShowExtras] = useState(false);
 
@@ -49,12 +48,7 @@ export default function CarInputs<T extends Record<string, FormValue>>({
   }
 
   function update(key: string, value: string | number | boolean) {
-    const win = window as Window & { __started?: boolean; gtag?: (...args: unknown[]) => void };
-
-    if (!win.__started) {
-      win.__started = true;
-      win.gtag?.("event", "started_input");
-    }
+    if (!key.endsWith("Open")) trackCalculatorStarted(calculatorType, 1);
 
     setData((prev) => ({
       ...prev,
@@ -183,6 +177,7 @@ export default function CarInputs<T extends Record<string, FormValue>>({
               <div
                 key={option}
                 onClick={() => {
+                  trackCalculatorStarted(calculatorType, 1);
                   handleFuelTypeChange(option);
                   update("fuelTypeOpen", false);
                 }}
@@ -298,10 +293,13 @@ export default function CarInputs<T extends Record<string, FormValue>>({
               className={inputClass}
               value={getInputValue(data.miscCosts)}
               onChange={(e) =>
-                setData((prev) => ({
-                  ...prev,
-                  miscCosts: e.target.value === "" ? "" : Number(e.target.value),
-                }))
+                {
+                  trackCalculatorStarted(calculatorType, 1);
+                  setData((prev) => ({
+                    ...prev,
+                    miscCosts: e.target.value === "" ? "" : Number(e.target.value),
+                  }));
+                }
               }
             />
             <div className="mt-1 text-xs text-slate-400">Breakdown cover, warranty, parking, ULEZ, etc.</div>

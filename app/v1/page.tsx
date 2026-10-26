@@ -1,17 +1,19 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Navbar from "@/components/Navbar";
 import CarInputs from "@/components/CarInputs";
 import { motion } from "framer-motion";
 import { DEFAULT_FUEL_PRICES } from "@/lib/vehicleDefaults";
 import { useOwnershipCost } from "@/hooks/useOwnershipCost";
-
-declare global {
-  interface Window {
-    gtag?: (...args: unknown[]) => void;
-  }
-}
+import {
+  trackCalculatorCompleted,
+  trackCalculatorStarted,
+  resetCalculatorAttempt,
+  trackResultsCtaClicked,
+  trackSuccessfulLeadSubmission,
+  type ResultsCtaType,
+} from "@/lib/gtag";
 
 function currency(value: number) {
   return new Intl.NumberFormat("en-GB", {
@@ -45,8 +47,6 @@ const [similarForm, setSimilarForm] = useState({
   radius: "25",
 });
       const [ownershipYears, setOwnershipYears] = useState(3);
-const resultsRef = useRef<HTMLElement | null>(null);
-const hasViewedResults = useRef(false);
   const [car, setCar] = useState({
 
     carValue: 18000,
@@ -110,60 +110,15 @@ const [emailError, setEmailError] = useState("");
   });
 
 useEffect(() => {
-  window.gtag?.("event", "recalculated_result");
-}, [results]);
-useEffect(() => {
-  if (!resultsRef.current) return;
+  trackCalculatorCompleted({ ownershipYears });
+}, [ownershipYears, results.totalCost]);
 
-  const observer = new IntersectionObserver(
-    ([entry]) => {
-      if (entry.isIntersecting && !hasViewedResults.current) {
-        hasViewedResults.current = true;
-
-        window.gtag?.("event", "viewed_result", {
-          ownership_years: ownershipYears,
-          total_cost: Math.round(results.totalCost),
-          monthly_cost: Math.round(results.monthlyCost),
-          fuel_type: car.fuelType,
-          car_type: car.carType,
-        });
-
-        observer.disconnect();
-      }
-    },
-    {
-      threshold: 0.5,
-    }
-  );
-
-  observer.observe(resultsRef.current);
-
-  return () => observer.disconnect();
-}, [ownershipYears, results.totalCost, results.monthlyCost, car.fuelType, car.carType]);
-
-function trackCtaClick(eventName: string) {
-  window.gtag?.("event", eventName, {
-    ownership_years: ownershipYears,
-    total_cost: Math.round(results.totalCost),
-    monthly_cost: Math.round(results.monthlyCost),
-    fuel_type: car.fuelType,
-    car_type: car.carType,
-  });
+function trackCtaClick(ctaType: ResultsCtaType) {
+  trackResultsCtaClicked(ctaType);
 }
+
 function submitSimilarCars(e: React.FormEvent) {
   e.preventDefault();
-
-  window.gtag?.("event", "submitted_similar_cta", {
-    postcode: similarForm.postcode,
-    budget: similarForm.budget,
-    radius: similarForm.radius,
-    ownership_years: ownershipYears,
-    total_cost: Math.round(results.totalCost),
-    monthly_cost: Math.round(results.monthlyCost),
-    fuel_type: car.fuelType,
-    car_type: car.carType,
-  });
-
   setSimilarSubmitted(true);
 }
 const mileageWarning = useMemo(() => {
@@ -220,6 +175,8 @@ async function sendBreakdownEmail() {
       body: JSON.stringify({
         email: breakdownEmail,
         ownershipYears,
+        purchaseType: "cash",
+        purchaseCost: results.totalDepreciation,
         totalCost: results.totalCost,
         monthlyCost: results.monthlyCost,
         costPerMile: results.costPerMile,
@@ -227,6 +184,8 @@ async function sendBreakdownEmail() {
         totalInsurance: results.totalInsurance,
         totalTax: results.totalTax,
         totalDepreciation: results.totalDepreciation,
+        totalMaintenance: results.totalMaintenance,
+        totalMiscCosts: numberOrZero(car.miscCosts) * ownershipYears,
         annualMiles: car.annualMiles,
         carValue: car.carValue,
         carYear: car.carYear,
@@ -235,13 +194,11 @@ async function sendBreakdownEmail() {
       }),
     });
 
-    console.log("email response", res.status);
-
     if (!res.ok) throw new Error("Failed");
 
+    trackSuccessfulLeadSubmission(true, "email_breakdown");
     setEmailSent(true);
-  } catch (err) {
-    console.error("EMAIL SEND FAILED:", err);
+  } catch {
     setEmailError("Could not send email. Please try again.");
   } finally {
     setEmailSending(false);
@@ -290,7 +247,7 @@ return (
         <div className="space-y-6">
 
           {/* RESULTS */}
-<section ref={resultsRef} className={cardClass}>
+<section className={cardClass}>
 
   <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
     <h2 className={sectionTitleClass}>Results</h2>
@@ -301,7 +258,10 @@ return (
   {[1, 2, 3, 4].map((year) => (
     <button
       key={year}
-      onClick={() => setOwnershipYears(year)}
+      onClick={() => {
+        trackCalculatorStarted("single", 1);
+        setOwnershipYears(year);
+      }}
       className={`relative z-10 flex-1 whitespace-nowrap px-2 sm:px-4 py-2 text-xs sm:text-sm font-medium transition active:scale-95 ${
         ownershipYears === year
           ? "text-slate-900 font-semibold"
@@ -418,7 +378,8 @@ return (
   {/* 🔥 PRIMARY CTA */}
   <button
     onClick={() => {
-      trackCtaClick("clicked_compare_cta");
+      trackCtaClick("compare_another_car");
+      resetCalculatorAttempt();
       localStorage.setItem("car1", JSON.stringify(car));
       window.location.href = "/compare";
     }}
@@ -432,7 +393,7 @@ return (
 
 <button
   onClick={() => {
-    trackCtaClick("clicked_similar_cta");
+    trackCtaClick("similar_vehicles");
     setSimilarModalOpen(true);
     setSimilarSubmitted(false);
   }}
@@ -445,7 +406,7 @@ return (
   onClick={() => {
     console.log("EMAIL CTA CLICKED");
 
-    trackCtaClick("clicked_email_cta");
+    trackCtaClick("email_breakdown");
 
     setTimeout(() => {
       setEmailModalOpen(true);
@@ -457,7 +418,7 @@ return (
 </button>
 
     <button
-      onClick={() => trackCtaClick("clicked_finance_cta")}
+      onClick={() => trackCtaClick("finance_inquiry")}
       className="rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-900 shadow-sm transition hover:bg-slate-50 active:scale-95"
     >
       Get finance quotes

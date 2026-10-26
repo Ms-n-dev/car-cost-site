@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useMemo, useState, useSyncExternalStore } from "react";
+import React, { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { useOwnershipCost } from "@/hooks/useOwnershipCost";
 import Navbar from "../../components/Navbar";
 import CarInputs from "../../components/CarInputs";
 import { DEFAULT_FUEL_PRICES } from "@/lib/vehicleDefaults";
+import { trackCalculatorCompleted } from "@/lib/gtag";
 
 function currency(value: number) {
   return new Intl.NumberFormat("en-GB", {
@@ -146,6 +147,11 @@ const results2 = useOwnershipCost({
   miscCosts: car2.miscCosts ?? 0,
   ownershipYears,
 });
+
+useEffect(() => {
+  trackCalculatorCompleted({ ownershipYears });
+}, [ownershipYears, results1.totalCost, results2.totalCost]);
+
 const costDifference = results2.totalCost - results1.totalCost;
 
 const cardClass =
@@ -221,6 +227,7 @@ const inputClass =
               setData={setCar1}
               inputClass={inputClass}
               labelClass={labelClass}
+              calculatorType="comparison"
               handleFuelTypeChange={handleFuelTypeChange(setCar1)}
             />
 
@@ -246,6 +253,7 @@ const inputClass =
               setData={setCar2}
               inputClass={inputClass}
               labelClass={labelClass}
+              calculatorType="comparison"
               handleFuelTypeChange={handleFuelTypeChange(setCar2)}
             />
 

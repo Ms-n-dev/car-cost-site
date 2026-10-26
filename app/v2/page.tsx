@@ -10,6 +10,7 @@ import ProgressBar from "@/components/v2/ProgressBar";
 import Link from "next/link";
 import { useOwnershipCost } from "@/hooks/useOwnershipCost";
 import { DEFAULT_FUEL_PRICES } from "@/lib/vehicleDefaults";
+import { resetCalculatorAttempt, trackCalculatorStepReached } from "@/lib/gtag";
 
 export type PurchaseType = "cash" | "finance";
 
@@ -223,11 +224,15 @@ const next = () => {
           ? getDefaultFuelPrice(current.fuelType)
           : current.fuelPrice,
     }));
+    trackCalculatorStepReached(3);
     setStep(3);
     return;
   }
 
-  setStep((prev) => Math.min(prev + 1, 4));
+  if (step < 4) {
+    trackCalculatorStepReached(step + 1);
+    setStep(step + 1);
+  }
 };
 const back = () => {
   setStep((prev) => {
@@ -308,6 +313,7 @@ const back = () => {
   updateData={updateData}
   back={back}
   restart={() => {
+    resetCalculatorAttempt();
     setData(initialData);
     setStep(1);
   }}

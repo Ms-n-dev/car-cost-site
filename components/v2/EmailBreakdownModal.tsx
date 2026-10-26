@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { V2FormData } from "@/app/v2/page";
-import { trackEvent } from "@/lib/gtag";
+import { trackSuccessfulLeadSubmission } from "@/lib/gtag";
 
 type Results = {
   totalCost: number;
@@ -83,7 +83,7 @@ totalMiscCosts: results.miscTotal,
         return;
       }
 
-      trackEvent("submitted_email_breakdown");
+      trackSuccessfulLeadSubmission(true, "email_breakdown");
       alert("Breakdown sent — check your inbox.");
       onClose();
     } catch {
